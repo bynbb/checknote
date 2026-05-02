@@ -1,0 +1,29 @@
+filegroup(
+    name = "app_sources",
+    srcs = glob([
+        "src/**",
+        "public/**",
+    ]) + [
+        "angular.json",
+        "package.json",
+        "package-lock.json",
+        "tsconfig.app.json",
+        "tsconfig.json",
+    ],
+)
+
+genrule(
+    name = "todo_app",
+    srcs = [":app_sources"],
+    tools = ["//tools:build_angular_bat"],
+    outs = ["todo-app.zip"],
+    cmd = """
+set -euo pipefail
+OUTDIR="$(@D)/todo-app"
+rm -rf "$$OUTDIR"
+./node_modules/.bin/ng build --configuration production --output-path="$$OUTDIR"
+cd "$$OUTDIR"
+zip -qr "$$(realpath "$@")" .
+""",
+    cmd_bat = "call $(location //tools:build_angular_bat) \"$(@D)\\todo-app\" \"$@\"",
+)

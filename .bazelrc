@@ -1,0 +1,2 @@
+build --color=yes
+build --verbose_failures

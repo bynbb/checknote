@@ -67,14 +67,14 @@ jobs:
       - name: Configure SSH
         env:
           WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
-          WEB_SERVER_SSH_KEY: ${{ secrets.WEB_SERVER_SSH_KEY }}
+          WEB_SERVER_SSH_KEY_B64: ${{ secrets.WEB_SERVER_SSH_KEY_B64 }}
           WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force -Path ~/.ssh | Out-Null
           $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
-          $env:WEB_SERVER_SSH_KEY | Out-File -FilePath $keyPath -Encoding ascii -NoNewline
+          [IO.File]::WriteAllBytes($keyPath, [Convert]::FromBase64String($env:WEB_SERVER_SSH_KEY_B64))
           ssh-keyscan -p $env:WEB_SERVER_PORT $env:WEB_SERVER_HOST | Out-File -FilePath (Join-Path $HOME '.ssh/known_hosts') -Encoding ascii -Append
 
       - name: Upload staged files

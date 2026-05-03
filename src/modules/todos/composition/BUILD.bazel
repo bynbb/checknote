@@ -1,0 +1,5 @@
+filegroup(
+    name = "composition",
+    srcs = glob(["**/*.ts"]),
+    visibility = ["//visibility:public"],
+)

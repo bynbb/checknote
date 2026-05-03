@@ -1,4 +1,8 @@
-exports_files(["build-angular.bat"])
+exports_files([
+    "architecture-rules.json",
+    "build-angular.bat",
+    "check-boundaries.mjs",
+])
 
 filegroup(
     name = "build_angular_bat",

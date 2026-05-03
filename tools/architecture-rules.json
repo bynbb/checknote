@@ -1,0 +1,5 @@
+{
+  "layers": ["domain", "application", "infrastructure", "presentation", "composition"],
+  "modules": ["users", "todos"],
+  "allowPresentationToCompositionTokens": true
+}

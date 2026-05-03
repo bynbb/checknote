@@ -13,8 +13,22 @@ filegroup(
 )
 
 genrule(
+    name = "architecture_check",
+    srcs = glob(["src/**/*.ts"]) + [
+        "//tools:architecture-rules.json",
+        "//tools:check-boundaries.mjs",
+    ],
+    outs = ["architecture-check.stamp"],
+    cmd = "node tools/check-boundaries.mjs && touch $@",
+    cmd_bat = "node tools\\check-boundaries.mjs && echo ok > $@",
+)
+
+genrule(
     name = "todo_app",
-    srcs = [":app_sources"],
+    srcs = [
+        ":app_sources",
+        ":architecture_check",
+    ],
     tools = ["//tools:build_angular_bat"],
     outs = ["todo-app.zip"],
     cmd = """

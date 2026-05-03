@@ -1,0 +1,9 @@
+<section class="user-summary" aria-label="Current user">
+  @if (facade.user(); as user) {
+    <span class="avatar" aria-hidden="true">{{ user.name.charAt(0) }}</span>
+    <span>
+      <strong>{{ user.name }}</strong>
+      <small>{{ user.email }}</small>
+    </span>
+  }
+</section>

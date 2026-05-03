@@ -1,0 +1,209 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import url from 'node:url';
+
+const rootDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
+const srcDir = path.join(rootDir, 'src');
+const rulesPath = path.join(rootDir, 'tools', 'architecture-rules.json');
+const rules = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
+const tsFiles = listFiles(srcDir).filter((file) => file.endsWith('.ts'));
+const violations = [];
+
+for (const file of tsFiles) {
+  const source = fs.readFileSync(file, 'utf8');
+  const imports = readImports(source);
+  const from = classify(file);
+
+  for (const specifier of imports) {
+    const target = resolveImport(file, specifier);
+
+    if (specifier.startsWith('@angular/')) {
+      validateAngularImport(file, from);
+      continue;
+    }
+
+    if (!target || !target.startsWith(srcDir)) {
+      continue;
+    }
+
+    validateInternalImport(file, target, from, classify(target));
+  }
+}
+
+if (violations.length > 0) {
+  console.error('Architecture violation:');
+  for (const violation of violations) {
+    console.error(`${toRepoPath(violation.file)} imported ${toRepoPath(violation.imported)}.`);
+    console.error(`${violation.reason}\n`);
+  }
+  process.exit(1);
+}
+
+const stamp = process.argv[2];
+if (stamp) {
+  fs.writeFileSync(path.resolve(rootDir, stamp), 'ok\n');
+}
+
+function listFiles(directory) {
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  return entries.flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    return entry.isDirectory() ? listFiles(fullPath) : [fullPath];
+  });
+}
+
+function readImports(source) {
+  const imports = [];
+  const importPattern = /import\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+  const dynamicPattern = /import\(\s*['"]([^'"]+)['"]\s*\)/g;
+  let match = importPattern.exec(source);
+
+  while (match) {
+    imports.push(match[1]);
+    match = importPattern.exec(source);
+  }
+
+  match = dynamicPattern.exec(source);
+  while (match) {
+    imports.push(match[1]);
+    match = dynamicPattern.exec(source);
+  }
+
+  return imports;
+}
+
+function resolveImport(fromFile, specifier) {
+  if (!specifier.startsWith('.')) {
+    return specifier.startsWith('src/') ? resolveExisting(path.join(rootDir, specifier)) : null;
+  }
+
+  return resolveExisting(path.resolve(path.dirname(fromFile), specifier));
+}
+
+function resolveExisting(basePath) {
+  const candidates = [
+    basePath,
+    `${basePath}.ts`,
+    path.join(basePath, 'index.ts'),
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
+function classify(file) {
+  const relative = toRepoPath(file);
+  const parts = relative.split('/');
+
+  if (parts[0] !== 'src') {
+    return { area: 'external' };
+  }
+
+  if (parts[1] === 'app' || parts[1] === 'main.ts') {
+    return { area: 'app' };
+  }
+
+  if (parts[1] === 'common' && rules.layers.includes(parts[2])) {
+    return { area: 'common', layer: parts[2] };
+  }
+
+  if (parts[1] === 'modules' && parts.length > 3 && rules.modules.includes(parts[2]) && rules.layers.includes(parts[3])) {
+    return { area: 'module', module: parts[2], layer: parts[3] };
+  }
+
+  return { area: 'other' };
+}
+
+function validateAngularImport(file, from) {
+  if (from.layer === 'domain' || from.layer === 'application' || from.layer === 'infrastructure') {
+    addViolation(file, '@angular/*', `${from.layer} may not depend on Angular.`);
+  }
+}
+
+function validateInternalImport(file, target, from, to) {
+  if (from.area === 'app') {
+    if (to.area === 'module' && to.layer !== 'composition' && to.layer !== 'presentation') {
+      addViolation(file, target, 'app may import module composition exports and presentation entry points only.');
+    }
+
+    if (to.area === 'common' && to.layer !== 'composition') {
+      addViolation(file, target, 'app may import common composition exports only.');
+    }
+
+    return;
+  }
+
+  if (from.area === 'common') {
+    validateCommonImport(file, target, from, to);
+    return;
+  }
+
+  if (from.area !== 'module') {
+    return;
+  }
+
+  if (to.area === 'module' && from.module !== to.module) {
+    addViolation(file, target, `cross-module imports between ${from.module} and ${to.module} are not allowed.`);
+    return;
+  }
+
+  if (to.area === 'common') {
+    validateCommonImport(file, target, from, to);
+    return;
+  }
+
+  if (to.area === 'module') {
+    validateModuleLayerImport(file, target, from, to);
+  }
+}
+
+function validateCommonImport(file, target, from, to) {
+  if (to.area !== 'common') {
+    return;
+  }
+
+  if (from.layer === 'domain' && to.layer !== 'domain') {
+    addViolation(file, target, 'domain may depend only on common/domain.');
+  }
+
+  if (from.layer === 'application' && !['domain', 'application'].includes(to.layer)) {
+    addViolation(file, target, 'application may depend only on common/domain and common/application.');
+  }
+
+  if (from.layer === 'presentation' && to.layer === 'infrastructure') {
+    addViolation(file, target, 'presentation may not depend on common/infrastructure.');
+  }
+}
+
+function validateModuleLayerImport(file, target, from, to) {
+  if (from.layer === 'domain' && to.layer !== 'domain') {
+    addViolation(file, target, 'domain may not depend on application, infrastructure, presentation, or composition.');
+  }
+
+  if (from.layer === 'application' && ['infrastructure', 'presentation', 'composition'].includes(to.layer)) {
+    addViolation(file, target, `application may not depend on ${to.layer}.`);
+  }
+
+  if (from.layer === 'infrastructure' && ['presentation', 'composition'].includes(to.layer)) {
+    addViolation(file, target, `infrastructure may not depend on ${to.layer}.`);
+  }
+
+  if (from.layer === 'presentation' && to.layer === 'infrastructure') {
+    addViolation(file, target, 'presentation may not depend on infrastructure.');
+  }
+
+  if (
+    from.layer === 'presentation' &&
+    to.layer === 'composition' &&
+    (!rules.allowPresentationToCompositionTokens || !target.endsWith('.tokens.ts'))
+  ) {
+    addViolation(file, target, 'presentation may import only composition token files.');
+  }
+}
+
+function addViolation(file, imported, reason) {
+  violations.push({ file, imported, reason });
+}
+
+function toRepoPath(file) {
+  return path.relative(rootDir, file).replaceAll(path.sep, '/');
+}

@@ -1,0 +1,5 @@
+filegroup(
+    name = "domain",
+    srcs = glob(["**/*.ts"]),
+    visibility = ["//visibility:public"],
+)

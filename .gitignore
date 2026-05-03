@@ -6,3 +6,5 @@ bazel-*
 
 dist/
 out-tsc/
+
+pm/

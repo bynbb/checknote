@@ -1,0 +1,125 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with Bazel
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: todo-app
+          path: bazel-bin/todo-app.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    name: Deploy to web server
+    runs-on: windows-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: todo-app
+          path: artifact
+
+      - name: Unpack static site
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path deploy | Out-Null
+          Expand-Archive -Path artifact/todo-app.zip -DestinationPath deploy -Force
+          if (!(Test-Path deploy/browser/index.html)) {
+            throw 'Expected deploy/browser/index.html was not found.'
+          }
+
+      - name: Configure SSH
+        env:
+          WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
+          WEB_SERVER_SSH_KEY: ${{ secrets.WEB_SERVER_SSH_KEY }}
+          WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path ~/.ssh | Out-Null
+          $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
+          $env:WEB_SERVER_SSH_KEY | Out-File -FilePath $keyPath -Encoding ascii -NoNewline
+          ssh-keyscan -p $env:WEB_SERVER_PORT $env:WEB_SERVER_HOST | Out-File -FilePath (Join-Path $HOME '.ssh/known_hosts') -Encoding ascii -Append
+
+      - name: Upload staged files
+        env:
+          WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
+          WEB_SERVER_USERNAME: ${{ secrets.WEB_SERVER_USERNAME }}
+          WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
+          WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
+          $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
+          $remoteZipPath = "$remoteDeployPath/site.zip"
+          $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
+
+          Compress-Archive -Path deploy/browser/* -DestinationPath site.zip -Force
+          ssh -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -Command `"New-Item -ItemType Directory -Force -Path '$remoteDeployPath' | Out-Null`""
+          scp -i $keyPath -P $env:WEB_SERVER_PORT site.zip "${remote}:$remoteZipPath"
+
+      - name: Publish staged files
+        env:
+          WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
+          WEB_SERVER_USERNAME: ${{ secrets.WEB_SERVER_USERNAME }}
+          WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
+          WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
+          $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
+          $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
+          $publishScript = @"
+          `$ErrorActionPreference = 'Stop'
+          `$site = '$env:WEB_SERVER_REMOTE_PATH'
+          `$stage = '$remoteDeployPath'
+          `$backup = Join-Path `$site ('.backups/' + (Get-Date -Format 'yyyyMMddHHmmss'))
+          New-Item -ItemType Directory -Force -Path `$site, `$backup | Out-Null
+          Expand-Archive -Path (Join-Path `$stage 'site.zip') -DestinationPath `$stage -Force
+          Get-ChildItem -LiteralPath `$site -Force | Where-Object {
+            `$_.Name -notin @('.deploy', '.backups', '.htaccess', 'web.config')
+          } | ForEach-Object {
+            Move-Item -LiteralPath `$_.FullName -Destination `$backup -Force
+          }
+          Copy-Item -Path (Join-Path `$stage '*') -Destination `$site -Recurse -Force -Exclude @('site.zip', 'web.config', '.htaccess')
+          "@
+          $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($publishScript))
+          ssh -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"

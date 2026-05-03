@@ -75,7 +75,6 @@ jobs:
           New-Item -ItemType Directory -Force -Path ~/.ssh | Out-Null
           $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
           [IO.File]::WriteAllBytes($keyPath, [Convert]::FromBase64String($env:WEB_SERVER_SSH_KEY_B64))
-          ssh-keyscan -p $env:WEB_SERVER_PORT $env:WEB_SERVER_HOST | Out-File -FilePath (Join-Path $HOME '.ssh/known_hosts') -Encoding ascii -Append
 
       - name: Upload staged files
         timeout-minutes: 5
@@ -91,7 +90,7 @@ jobs:
           $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
           $remoteZipPath = "$remoteDeployPath/site.zip"
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
-          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
 
           Compress-Archive -Path deploy/browser/* -DestinationPath site.zip -Force
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -Command `"New-Item -ItemType Directory -Force -Path '$remoteDeployPath' | Out-Null`""
@@ -110,7 +109,7 @@ jobs:
           $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
           $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
-          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
           $publishScript = @"
           `$ErrorActionPreference = 'Stop'
           `$site = '$env:WEB_SERVER_REMOTE_PATH'

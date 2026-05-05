@@ -29,11 +29,23 @@ jobs:
       - name: Build with Bazel
         run: npm run build
 
+      - name: Stage build artifact
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bazelBin = (& npx bazelisk info bazel-bin).Trim()
+          $artifactPath = Join-Path $bazelBin 'todo-app.zip'
+          if (!(Test-Path $artifactPath)) {
+            throw "Expected Bazel artifact was not found: $artifactPath"
+          }
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Copy-Item -LiteralPath $artifactPath -Destination artifacts/todo-app.zip -Force
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: todo-app
-          path: bazel-bin/todo-app.zip
+          path: artifacts/todo-app.zip
           if-no-files-found: error
           retention-days: 14
 

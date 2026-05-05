@@ -1,2 +1,5 @@
 build --color=yes
 build --verbose_failures
+startup --nowindows_enable_symlinks
+build --experimental_convenience_symlinks=ignore
+build --enable_runfiles=no

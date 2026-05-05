@@ -6,5 +6,6 @@ bazel-*
 
 dist/
 out-tsc/
+artifacts/
 
 pm/

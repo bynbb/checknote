@@ -111,12 +111,19 @@ function listFiles(directory) {
 function readImports(source) {
   const imports = [];
   const importPattern = /import\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+  const exportPattern = /export\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g;
   const dynamicPattern = /import\(\s*['"]([^'"]+)['"]\s*\)/g;
   let match = importPattern.exec(source);
 
   while (match) {
     imports.push(match[1]);
     match = importPattern.exec(source);
+  }
+
+  match = exportPattern.exec(source);
+  while (match) {
+    imports.push(match[1]);
+    match = exportPattern.exec(source);
   }
 
   match = dynamicPattern.exec(source);
@@ -130,6 +137,10 @@ function readImports(source) {
 
 function resolveImport(fromFile, specifier) {
   if (!specifier.startsWith('.')) {
+    if (specifier.startsWith('@cdev/')) {
+      return resolveExisting(path.join(srcDir, specifier.slice('@cdev/'.length)));
+    }
+
     return specifier.startsWith('src/') ? resolveExisting(path.join(srcDir, specifier.slice('src/'.length))) : null;
   }
 
@@ -138,9 +149,9 @@ function resolveImport(fromFile, specifier) {
 
 function resolveExisting(basePath) {
   const candidates = [
-    basePath,
     `${basePath}.ts`,
     path.join(basePath, 'index.ts'),
+    basePath,
   ];
 
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;

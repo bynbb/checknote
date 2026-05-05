@@ -1,5 +1,5 @@
-import { QueryHandler } from '../../../../../common/application/messaging/query-handler';
-import { User } from '../../../domain/user';
+import { QueryHandler } from '@cdev/common/application';
+import { User } from '@cdev/modules/users/domain';
 import { UserRepository } from '../../abstractions/user-repository';
 import { GetCurrentUserQuery } from './get-current-user.query';
 

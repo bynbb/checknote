@@ -1,8 +1,8 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app.component';
-import { provideCommonModule } from './common/composition/provide-common';
-import { provideTodosModule } from './modules/todos/composition';
-import { provideUsersModule } from './modules/users/composition';
+import { AppComponent } from '@cdev/app/app.component';
+import { provideCommonModule } from '@cdev/common/composition';
+import { provideTodosModule } from '@cdev/modules/todos/composition';
+import { provideUsersModule } from '@cdev/modules/users/composition';
 
 bootstrapApplication(AppComponent, {
   providers: [provideCommonModule(), provideUsersModule(), provideTodosModule()],

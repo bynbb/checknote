@@ -1,4 +1,4 @@
-import { Command } from '../../../../../common/application/messaging/command';
+import { Command } from '@cdev/common/application';
 
 export class ClearCompletedCommand implements Command {
   readonly type = 'todos.clear-completed';

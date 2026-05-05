@@ -1,4 +1,4 @@
-import { User } from '../../domain/user';
+import { User } from '@cdev/modules/users/domain';
 
 export interface UserRepository {
   getCurrentUser(): Promise<User>;

@@ -1,4 +1,4 @@
-import { Todo } from '../../domain/todo';
+import { Todo } from '@cdev/modules/todos/domain';
 
 export interface TodoRepository {
   getAll(): Promise<Todo[]>;

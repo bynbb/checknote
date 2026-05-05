@@ -1,7 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { GET_CURRENT_USER_HANDLER } from '../composition/users.tokens';
-import { User } from '../domain/user';
-import { GetCurrentUserQuery } from '../application/users/get-current-user/get-current-user.query';
+import { GetCurrentUserQuery } from '@cdev/modules/users/application';
+import { GET_CURRENT_USER_HANDLER } from '@cdev/modules/users/composition/users.tokens';
+import { User } from '@cdev/modules/users/domain';
 
 @Injectable()
 export class UserSummaryFacade {

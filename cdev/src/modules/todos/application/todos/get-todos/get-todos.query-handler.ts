@@ -1,5 +1,5 @@
-import { QueryHandler } from '../../../../../common/application/messaging/query-handler';
-import { Todo } from '../../../domain/todo';
+import { QueryHandler } from '@cdev/common/application';
+import { Todo } from '@cdev/modules/todos/domain';
 import { TodoRepository } from '../../abstractions/todo-repository';
 import { GetTodosQuery } from './get-todos.query';
 

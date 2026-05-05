@@ -1,5 +1,5 @@
-import { MockEndpointLogger } from '../../../common/infrastructure/mock-endpoint-logger';
-import { User } from '../domain/user';
+import { MockEndpointLogger } from '@cdev/common/infrastructure';
+import { User } from '@cdev/modules/users/domain';
 
 export class MockUsersEndpoint {
   constructor(private readonly logger: MockEndpointLogger) {}

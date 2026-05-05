@@ -1,5 +1,5 @@
-import { Query } from '../../../../../common/application/messaging/query';
-import { Todo } from '../../../domain/todo';
+import { Query } from '@cdev/common/application';
+import { Todo } from '@cdev/modules/todos/domain';
 
 export class GetTodosQuery implements Query<Todo[]> {
   readonly type = 'todos.get';

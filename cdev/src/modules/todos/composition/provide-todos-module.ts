@@ -1,16 +1,20 @@
 import { makeEnvironmentProviders } from '@angular/core';
-import { MockEndpointLogger } from '../../../common/infrastructure/mock-endpoint-logger';
-import { TodoIdGenerator } from '../application/abstractions/todo-id-generator';
-import { TodoRepository } from '../application/abstractions/todo-repository';
-import { AddTodoCommandHandler } from '../application/todos/add-todo/add-todo.command-handler';
-import { ClearCompletedCommandHandler } from '../application/todos/clear-completed/clear-completed.command-handler';
-import { DeleteTodoCommandHandler } from '../application/todos/delete-todo/delete-todo.command-handler';
-import { GetTodosQueryHandler } from '../application/todos/get-todos/get-todos.query-handler';
-import { ToggleTodoCommandHandler } from '../application/todos/toggle-todo/toggle-todo.command-handler';
-import { DateNowTodoIdGenerator } from '../infrastructure/date-now-todo-id-generator';
-import { LocalStorageTodoRepository } from '../infrastructure/local-storage-todo-repository';
-import { MockTodosEndpoint } from '../infrastructure/mock-todos-endpoint';
-import { TodosPageFacade } from '../presentation/todos-page.facade';
+import { MockEndpointLogger } from '@cdev/common/infrastructure';
+import {
+  AddTodoCommandHandler,
+  ClearCompletedCommandHandler,
+  DeleteTodoCommandHandler,
+  GetTodosQueryHandler,
+  TodoIdGenerator,
+  TodoRepository,
+  ToggleTodoCommandHandler,
+} from '@cdev/modules/todos/application';
+import {
+  DateNowTodoIdGenerator,
+  LocalStorageTodoRepository,
+  MockTodosEndpoint,
+} from '@cdev/modules/todos/infrastructure';
+import { TodosPageFacade } from '@cdev/modules/todos/presentation';
 import {
   ADD_TODO_HANDLER,
   CLEAR_COMPLETED_HANDLER,

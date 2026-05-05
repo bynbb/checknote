@@ -1,18 +1,19 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { AddTodoCommand } from '../application/todos/add-todo/add-todo.command';
-import { ClearCompletedCommand } from '../application/todos/clear-completed/clear-completed.command';
-import { DeleteTodoCommand } from '../application/todos/delete-todo/delete-todo.command';
-import { GetTodosQuery } from '../application/todos/get-todos/get-todos.query';
-import { ToggleTodoCommand } from '../application/todos/toggle-todo/toggle-todo.command';
-import { Todo } from '../domain/todo';
-import { TodoFilter } from '../domain/todo-filter';
+import {
+  AddTodoCommand,
+  ClearCompletedCommand,
+  DeleteTodoCommand,
+  GetTodosQuery,
+  ToggleTodoCommand,
+} from '@cdev/modules/todos/application';
+import { Todo, TodoFilter } from '@cdev/modules/todos/domain';
 import {
   ADD_TODO_HANDLER,
   CLEAR_COMPLETED_HANDLER,
   DELETE_TODO_HANDLER,
   GET_TODOS_HANDLER,
   TOGGLE_TODO_HANDLER,
-} from '../composition/todos.tokens';
+} from '@cdev/modules/todos/composition/todos.tokens';
 
 @Injectable()
 export class TodosPageFacade {

@@ -51,6 +51,26 @@ const cases = [
     includes: 'application may not depend on infrastructure.',
   },
   {
+    name: 'rejects cdev namespace imports through configured src dir',
+    files: {
+      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/application/use-case.ts':
+        "import { LocalStorageTodoRepository } from '@cdev/modules/todos/infrastructure/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
+    },
+    status: 1,
+    includes: 'application may not depend on infrastructure.',
+  },
+  {
+    name: 'rejects forbidden re-exports',
+    files: {
+      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/application/index.ts':
+        "export { LocalStorageTodoRepository } from '../infrastructure/local-storage-todo-repository';\n",
+    },
+    status: 1,
+    includes: 'application may not depend on infrastructure.',
+  },
+  {
     name: 'rejects presentation importing infrastructure',
     files: {
       'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',

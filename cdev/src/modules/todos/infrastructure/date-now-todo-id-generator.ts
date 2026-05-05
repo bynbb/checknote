@@ -1,5 +1,5 @@
-import { TodoIdGenerator } from '../application/abstractions/todo-id-generator';
-import { TodoId } from '../domain/todo-id';
+import { TodoIdGenerator } from '@cdev/modules/todos/application';
+import { TodoId } from '@cdev/modules/todos/domain';
 
 export class DateNowTodoIdGenerator implements TodoIdGenerator {
   nextId(): TodoId {

@@ -1,5 +1,5 @@
-import { CommandHandler } from '../../../../../common/application/messaging/command-handler';
-import { Todo } from '../../../domain/todo';
+import { CommandHandler } from '@cdev/common/application';
+import { Todo } from '@cdev/modules/todos/domain';
 import { TodoIdGenerator } from '../../abstractions/todo-id-generator';
 import { TodoRepository } from '../../abstractions/todo-repository';
 import { AddTodoCommand } from './add-todo.command';

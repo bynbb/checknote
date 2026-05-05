@@ -1,5 +1,5 @@
-import { UserRepository } from '../application/abstractions/user-repository';
-import { User } from '../domain/user';
+import { UserRepository } from '@cdev/modules/users/application';
+import { User } from '@cdev/modules/users/domain';
 import { MockUsersEndpoint } from './mock-users-endpoint';
 
 export class LocalUserRepository implements UserRepository {

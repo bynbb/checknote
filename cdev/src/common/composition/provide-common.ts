@@ -1,6 +1,5 @@
 import { makeEnvironmentProviders } from '@angular/core';
-import { BrowserClock } from '../infrastructure/browser-clock';
-import { MockEndpointLogger } from '../infrastructure/mock-endpoint-logger';
+import { BrowserClock, MockEndpointLogger } from '@cdev/common/infrastructure';
 
 export function provideCommonModule() {
   return makeEnvironmentProviders([BrowserClock, MockEndpointLogger]);

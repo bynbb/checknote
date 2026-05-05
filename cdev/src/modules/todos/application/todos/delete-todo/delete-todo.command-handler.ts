@@ -1,4 +1,4 @@
-import { CommandHandler } from '../../../../../common/application/messaging/command-handler';
+import { CommandHandler } from '@cdev/common/application';
 import { TodoRepository } from '../../abstractions/todo-repository';
 import { DeleteTodoCommand } from './delete-todo.command';
 

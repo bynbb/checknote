@@ -1,4 +1,4 @@
-import { CommandHandler } from '../../../../../common/application/messaging/command-handler';
+import { CommandHandler } from '@cdev/common/application';
 import { UserRepository } from '../../abstractions/user-repository';
 import { RegisterUserCommand } from './register-user.command';
 

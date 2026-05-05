@@ -1,5 +1,5 @@
-import { TodoRepository } from '../application/abstractions/todo-repository';
-import { Todo } from '../domain/todo';
+import { TodoRepository } from '@cdev/modules/todos/application';
+import { Todo } from '@cdev/modules/todos/domain';
 import { MockTodosEndpoint } from './mock-todos-endpoint';
 
 const STORAGE_KEY = 'bazel-angular-todos';

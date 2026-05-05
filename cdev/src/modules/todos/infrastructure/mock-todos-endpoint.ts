@@ -1,5 +1,5 @@
-import { MockEndpointLogger } from '../../../common/infrastructure/mock-endpoint-logger';
-import { Todo } from '../domain/todo';
+import { MockEndpointLogger } from '@cdev/common/infrastructure';
+import { Todo } from '@cdev/modules/todos/domain';
 
 export class MockTodosEndpoint {
   constructor(private readonly logger: MockEndpointLogger) {}

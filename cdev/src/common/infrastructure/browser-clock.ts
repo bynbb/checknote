@@ -1,4 +1,4 @@
-import { Clock } from '../application/ports/clock';
+import { Clock } from '@cdev/common/application';
 
 export class BrowserClock implements Clock {
   now(): Date {

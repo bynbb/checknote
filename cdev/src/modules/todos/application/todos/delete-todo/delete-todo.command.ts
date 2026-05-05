@@ -1,5 +1,5 @@
-import { Command } from '../../../../../common/application/messaging/command';
-import { TodoId } from '../../../domain/todo-id';
+import { Command } from '@cdev/common/application';
+import { TodoId } from '@cdev/modules/todos/domain';
 
 export class DeleteTodoCommand implements Command {
   readonly type = 'todos.delete';

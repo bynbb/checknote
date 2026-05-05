@@ -1,10 +1,106 @@
 package(default_visibility = ["//visibility:public"])
 
+package_group(
+    name = "app_package",
+    packages = ["//cdev"],
+)
+
+package_group(
+    name = "all_cdev_packages",
+    packages = [
+        "//cdev/src/common/...",
+        "//cdev/src/modules/...",
+    ],
+)
+
+package_group(
+    name = "todos_domain_consumers",
+    packages = [
+        "//cdev/src/modules/todos/application",
+        "//cdev/src/modules/todos/composition",
+        "//cdev/src/modules/todos/infrastructure",
+        "//cdev/src/modules/todos/presentation",
+    ],
+)
+
+package_group(
+    name = "todos_application_consumers",
+    packages = [
+        "//cdev/src/modules/todos/composition",
+        "//cdev/src/modules/todos/infrastructure",
+        "//cdev/src/modules/todos/presentation",
+    ],
+)
+
+package_group(
+    name = "todos_infrastructure_consumers",
+    packages = ["//cdev/src/modules/todos/composition"],
+)
+
+package_group(
+    name = "todos_presentation_consumers",
+    packages = [
+        "//cdev",
+        "//cdev/src/modules/todos/composition",
+    ],
+)
+
+package_group(
+    name = "todos_composition_token_consumers",
+    packages = [
+        "//cdev/src/modules/todos/composition",
+        "//cdev/src/modules/todos/presentation",
+    ],
+)
+
+package_group(
+    name = "users_domain_consumers",
+    packages = [
+        "//cdev/src/modules/users/application",
+        "//cdev/src/modules/users/composition",
+        "//cdev/src/modules/users/infrastructure",
+        "//cdev/src/modules/users/presentation",
+    ],
+)
+
+package_group(
+    name = "users_application_consumers",
+    packages = [
+        "//cdev/src/modules/users/composition",
+        "//cdev/src/modules/users/infrastructure",
+        "//cdev/src/modules/users/presentation",
+    ],
+)
+
+package_group(
+    name = "users_infrastructure_consumers",
+    packages = ["//cdev/src/modules/users/composition"],
+)
+
+package_group(
+    name = "users_presentation_consumers",
+    packages = [
+        "//cdev",
+        "//cdev/src/modules/users/composition",
+    ],
+)
+
+package_group(
+    name = "users_composition_token_consumers",
+    packages = [
+        "//cdev/src/modules/users/composition",
+        "//cdev/src/modules/users/presentation",
+    ],
+)
+
 filegroup(
-    name = "app_sources",
+    name = "app_shell_sources",
     srcs = glob([
         "public/**",
-        "src/**",
+        "src/*.css",
+        "src/*.html",
+        "src/*.ts",
+        "src/app/**",
     ]) + [
         "angular.json",
         "tsconfig.app.json",
@@ -12,9 +108,28 @@ filegroup(
     ],
 )
 
+filegroup(
+    name = "layer_sources",
+    srcs = [
+        "//cdev/src/common/composition",
+        "//cdev/src/modules/todos/composition",
+        "//cdev/src/modules/users/composition",
+    ],
+)
+
+filegroup(
+    name = "app_sources",
+    srcs = [
+        ":app_shell_sources",
+        ":layer_sources",
+    ],
+)
+
 genrule(
     name = "architecture_check",
-    srcs = glob(["src/**/*.ts"]) + [
+    srcs = [
+        ":app_shell_sources",
+        ":layer_sources",
         "//tools:architecture-rules.json",
         "//tools:check-boundaries.mjs",
     ],

@@ -1,5 +1,31 @@
-filegroup(
+load("//tools:cdev_architecture.bzl", "cdev_layer")
+
+package(default_visibility = ["//visibility:private"])
+
+cdev_layer(
+    name = "tokens",
+    area = "module",
+    layer = "composition",
+    module = "todos",
+    role = "tokens",
+    srcs = glob(["**/*.tokens.ts"]),
+    deps = ["//cdev/src/modules/todos/application"],
+    visibility = ["//cdev:todos_composition_token_consumers"],
+)
+
+cdev_layer(
     name = "composition",
-    srcs = glob(["**/*.ts"]),
-    visibility = ["//visibility:public"],
+    area = "module",
+    layer = "composition",
+    module = "todos",
+    srcs = glob(["**/*.ts"], exclude = ["**/*.tokens.ts"]),
+    deps = [
+        ":tokens",
+        "//cdev/src/common/infrastructure",
+        "//cdev/src/modules/todos/application",
+        "//cdev/src/modules/todos/domain",
+        "//cdev/src/modules/todos/infrastructure",
+        "//cdev/src/modules/todos/presentation",
+    ],
+    visibility = ["//cdev:app_package"],
 )

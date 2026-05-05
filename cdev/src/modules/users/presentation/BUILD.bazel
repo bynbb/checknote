@@ -1,5 +1,20 @@
-filegroup(
+load("//tools:cdev_architecture.bzl", "cdev_layer")
+
+package(default_visibility = ["//visibility:private"])
+
+cdev_layer(
     name = "presentation",
-    srcs = glob(["**/*.ts", "**/*.html", "**/*.css"]),
-    visibility = ["//visibility:public"],
+    area = "module",
+    assets = glob(["**/*.html", "**/*.css"]),
+    layer = "presentation",
+    module = "users",
+    srcs = glob(["**/*.ts"]),
+    deps = [
+        "//cdev/src/modules/users/application",
+        "//cdev/src/modules/users/composition:tokens",
+        "//cdev/src/modules/users/domain",
+    ],
+    visibility = [
+        "//cdev:users_presentation_consumers",
+    ],
 )

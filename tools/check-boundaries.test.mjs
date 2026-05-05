@@ -17,25 +17,25 @@ const cases = [
   {
     name: 'allows application ports implemented by infrastructure',
     files: {
-      'src/modules/todos/domain/todo.ts': 'export interface Todo { readonly title: string; }\n',
+      'src/modules/todos/domain/todos/todo.ts': 'export interface Todo { readonly title: string; }\n',
       'src/modules/todos/application/abstractions/todo-repository.ts':
-        "import { Todo } from '../../domain/todo';\nexport interface TodoRepository { getAll(): Todo[]; }\n",
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts':
-        "import { TodoRepository } from '../application/abstractions/todo-repository';\nexport class LocalStorageTodoRepository implements TodoRepository { getAll() { return []; } }\n",
-      'src/modules/todos/composition/todos.tokens.ts': "export const TODO_REPOSITORY = Symbol('TODO_REPOSITORY');\n",
-      'src/modules/todos/presentation/todos-page.facade.ts':
-        "import { TODO_REPOSITORY } from '../composition/todos.tokens';\nexport const token = TODO_REPOSITORY;\n",
+        "import { Todo } from '../../domain/todos/todo';\nexport interface TodoRepository { getAll(): Todo[]; }\n",
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts':
+        "import { TodoRepository } from '../../application/abstractions/todo-repository';\nexport class LocalStorageTodoRepository implements TodoRepository { getAll() { return []; } }\n",
+      'src/modules/todos/composition/todos/todos.tokens.ts': "export const TODO_REPOSITORY = Symbol('TODO_REPOSITORY');\n",
+      'src/modules/todos/presentation/todos/todos-page.facade.ts':
+        "import { TODO_REPOSITORY } from '../../composition/todos/todos.tokens';\nexport const token = TODO_REPOSITORY;\n",
       'src/app/app.component.ts':
-        "import '../modules/todos/presentation/todos-page.facade';\nimport '../modules/todos/composition/todos.tokens';\n",
+        "import '../modules/todos/presentation/todos/todos-page.facade';\nimport '../modules/todos/composition/todos/todos.tokens';\n",
     },
     status: 0,
   },
   {
     name: 'rejects application importing infrastructure',
     files: {
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
-      'src/modules/todos/application/use-case.ts':
-        "import { LocalStorageTodoRepository } from '../infrastructure/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/application/todos/use-case.ts':
+        "import { LocalStorageTodoRepository } from '../../infrastructure/todos/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
     },
     status: 1,
     includes: 'application may not depend on infrastructure.',
@@ -43,9 +43,9 @@ const cases = [
   {
     name: 'rejects source-root imports through configured src dir',
     files: {
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
-      'src/modules/todos/application/use-case.ts':
-        "import { LocalStorageTodoRepository } from 'src/modules/todos/infrastructure/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/application/todos/use-case.ts':
+        "import { LocalStorageTodoRepository } from 'src/modules/todos/infrastructure/todos/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
     },
     status: 1,
     includes: 'application may not depend on infrastructure.',
@@ -53,9 +53,9 @@ const cases = [
   {
     name: 'rejects cdev namespace imports through configured src dir',
     files: {
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
-      'src/modules/todos/application/use-case.ts':
-        "import { LocalStorageTodoRepository } from '@cdev/modules/todos/infrastructure/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/application/todos/use-case.ts':
+        "import { LocalStorageTodoRepository } from '@cdev/modules/todos/infrastructure/todos/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
     },
     status: 1,
     includes: 'application may not depend on infrastructure.',
@@ -63,9 +63,9 @@ const cases = [
   {
     name: 'rejects forbidden re-exports',
     files: {
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
       'src/modules/todos/application/index.ts':
-        "export { LocalStorageTodoRepository } from '../infrastructure/local-storage-todo-repository';\n",
+        "export { LocalStorageTodoRepository } from '../infrastructure/todos/local-storage-todo-repository';\n",
     },
     status: 1,
     includes: 'application may not depend on infrastructure.',
@@ -73,9 +73,9 @@ const cases = [
   {
     name: 'rejects presentation importing infrastructure',
     files: {
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
-      'src/modules/todos/presentation/todos-page.facade.ts':
-        "import { LocalStorageTodoRepository } from '../infrastructure/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/presentation/todos/todos-page.facade.ts':
+        "import { LocalStorageTodoRepository } from '../../infrastructure/todos/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
     },
     status: 1,
     includes: 'presentation may not depend on infrastructure.',
@@ -83,7 +83,7 @@ const cases = [
   {
     name: 'rejects domain importing Angular',
     files: {
-      'src/modules/todos/domain/todo.ts': "import { Injectable } from '@angular/core';\nexport const token = Injectable;\n",
+      'src/modules/todos/domain/todos/todo.ts': "import { Injectable } from '@angular/core';\nexport const token = Injectable;\n",
     },
     status: 1,
     includes: 'domain may not depend on Angular.',
@@ -91,9 +91,9 @@ const cases = [
   {
     name: 'rejects cross-module imports',
     files: {
-      'src/modules/users/domain/user.ts': 'export interface User { readonly name: string; }\n',
-      'src/modules/todos/application/use-case.ts':
-        "import { User } from '../../users/domain/user';\nexport type TodoUser = User;\n",
+      'src/modules/users/domain/users/user.ts': 'export interface User { readonly name: string; }\n',
+      'src/modules/todos/application/todos/use-case.ts':
+        "import { User } from '../../../users/domain/users/user';\nexport type TodoUser = User;\n",
     },
     status: 1,
     includes: 'cross-module imports between todos and users are not allowed.',
@@ -101,9 +101,9 @@ const cases = [
   {
     name: 'rejects infrastructure importing presentation',
     files: {
-      'src/modules/todos/presentation/todos-page.component.ts': 'export class TodosPageComponent {}\n',
-      'src/modules/todos/infrastructure/local-storage-todo-repository.ts':
-        "import { TodosPageComponent } from '../presentation/todos-page.component';\nexport const component = TodosPageComponent;\n",
+      'src/modules/todos/presentation/todos/todos-page.component.ts': 'export class TodosPageComponent {}\n',
+      'src/modules/todos/infrastructure/todos/local-storage-todo-repository.ts':
+        "import { TodosPageComponent } from '../../presentation/todos/todos-page.component';\nexport const component = TodosPageComponent;\n",
     },
     status: 1,
     includes: 'infrastructure may not depend on presentation.',

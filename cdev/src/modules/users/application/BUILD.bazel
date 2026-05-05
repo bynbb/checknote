@@ -1,5 +1,17 @@
-filegroup(
+load("//tools:cdev_architecture.bzl", "cdev_layer")
+
+package(default_visibility = ["//visibility:private"])
+
+cdev_layer(
     name = "application",
+    area = "module",
+    layer = "application",
+    module = "users",
     srcs = glob(["**/*.ts"]),
-    visibility = ["//visibility:public"],
+    deps = [
+        "//cdev/src/common/application",
+        "//cdev/src/common/domain",
+        "//cdev/src/modules/users/domain",
+    ],
+    visibility = ["//cdev:users_application_consumers"],
 )

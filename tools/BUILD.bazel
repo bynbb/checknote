@@ -1,6 +1,7 @@
 exports_files([
     "architecture-rules.json",
     "build-angular.bat",
+    "cdev_architecture.bzl",
     "check-boundaries.test.mjs",
     "check-boundaries.mjs",
 ])

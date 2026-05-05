@@ -1,5 +1,15 @@
-filegroup(
+load("//tools:cdev_architecture.bzl", "cdev_layer")
+
+package(default_visibility = ["//visibility:private"])
+
+cdev_layer(
     name = "infrastructure",
+    area = "common",
+    layer = "infrastructure",
     srcs = glob(["**/*.ts"]),
-    visibility = ["//visibility:public"],
+    deps = [
+        "//cdev/src/common/application",
+        "//cdev/src/common/domain",
+    ],
+    visibility = ["//cdev:all_cdev_packages"],
 )

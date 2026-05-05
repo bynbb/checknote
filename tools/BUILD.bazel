@@ -1,6 +1,7 @@
 exports_files([
     "architecture-rules.json",
     "build-angular.bat",
+    "check-boundaries.test.mjs",
     "check-boundaries.mjs",
 ])
 

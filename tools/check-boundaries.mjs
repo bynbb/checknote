@@ -2,9 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-const rootDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-const srcDir = path.join(rootDir, 'src');
-const rulesPath = path.join(rootDir, 'tools', 'architecture-rules.json');
+const defaultRootDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
+const options = parseOptions(process.argv.slice(2));
+const rootDir = options.rootDir ? path.resolve(options.rootDir) : defaultRootDir;
+const srcDir = options.srcDir ? path.resolve(options.srcDir) : path.join(rootDir, 'src');
+const rulesPath = options.rulesPath ? path.resolve(options.rulesPath) : path.join(rootDir, 'tools', 'architecture-rules.json');
 const rules = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
 const tsFiles = listFiles(srcDir).filter((file) => file.endsWith('.ts'));
 const violations = [];
@@ -22,7 +24,7 @@ for (const file of tsFiles) {
       continue;
     }
 
-    if (!target || !target.startsWith(srcDir)) {
+    if (!target || !isInside(target, srcDir)) {
       continue;
     }
 
@@ -39,9 +41,63 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-const stamp = process.argv[2];
+const stamp = options.stamp;
 if (stamp) {
   fs.writeFileSync(path.resolve(rootDir, stamp), 'ok\n');
+}
+
+function parseOptions(args) {
+  const parsed = {
+    rootDir: null,
+    srcDir: null,
+    rulesPath: null,
+    stamp: null,
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    const next = args[index + 1];
+
+    if (arg === '--root-dir') {
+      parsed.rootDir = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--src-dir') {
+      parsed.srcDir = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--rules') {
+      parsed.rulesPath = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--stamp') {
+      parsed.stamp = requireValue(arg, next);
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown option: ${arg}`);
+    }
+
+    parsed.stamp = arg;
+  }
+
+  return parsed;
+}
+
+function requireValue(option, value) {
+  if (!value || value.startsWith('--')) {
+    throw new Error(`${option} requires a value.`);
+  }
+
+  return value;
 }
 
 function listFiles(directory) {
@@ -88,6 +144,11 @@ function resolveExisting(basePath) {
   ];
 
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
+function isInside(file, directory) {
+  const relative = path.relative(directory, file);
+  return relative === '' || (!!relative && !relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
 function classify(file) {

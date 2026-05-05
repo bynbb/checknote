@@ -24,10 +24,23 @@ genrule(
 )
 
 genrule(
+    name = "architecture_checker_tests",
+    srcs = [
+        "//tools:architecture-rules.json",
+        "//tools:check-boundaries.test.mjs",
+        "//tools:check-boundaries.mjs",
+    ],
+    outs = ["architecture-checker-tests.stamp"],
+    cmd = "node tools/check-boundaries.test.mjs && touch $@",
+    cmd_bat = "node tools\\check-boundaries.test.mjs && echo ok > $@",
+)
+
+genrule(
     name = "todo_app",
     srcs = [
         ":app_sources",
         ":architecture_check",
+        ":architecture_checker_tests",
     ],
     tools = ["//tools:build_angular_bat"],
     outs = ["todo-app.zip"],

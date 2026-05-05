@@ -5,6 +5,7 @@
   "scripts": {
     "build": "bazelisk build //:todo_app",
     "check:architecture": "node tools/check-boundaries.mjs",
+    "test:architecture": "node tools/check-boundaries.test.mjs",
     "serve": "ng serve --host 127.0.0.1 --port 4200",
     "ng": "ng"
   },

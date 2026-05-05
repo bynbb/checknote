@@ -145,7 +145,10 @@ genrule(
         ":architecture_check",
         "//tools:check_boundaries_test",
     ],
-    tools = ["//tools:build_angular_bat"],
+    tools = [
+        "//tools:build_angular_bat",
+        "//tools:build_angular_mjs",
+    ],
     outs = ["todo-app.zip"],
     cmd = """
 set -euo pipefail
@@ -153,7 +156,7 @@ OUTDIR="$$(pwd)/$(@D)/todo-app"
 ZIPFILE="$$(pwd)/$@"
 rm -rf "$$OUTDIR"
 cd cdev
-../node_modules/.bin/ng build --configuration production --output-path="$$OUTDIR"
+node ../tools/build-angular.mjs --workspace . --target checknote:build:production --output "$$OUTDIR"
 cd "$$OUTDIR"
 zip -qr "$$ZIPFILE" .
 """,

@@ -1,6 +1,7 @@
 exports_files([
     "architecture-rules.json",
     "build-angular.bat",
+    "build-angular.mjs",
     "cdev_architecture.bzl",
     "check-boundaries.test.mjs",
     "check-boundaries.mjs",
@@ -9,6 +10,12 @@ exports_files([
 filegroup(
     name = "build_angular_bat",
     srcs = ["build-angular.bat"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "build_angular_mjs",
+    srcs = ["build-angular.mjs"],
     visibility = ["//visibility:public"],
 )
 

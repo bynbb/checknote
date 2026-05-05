@@ -9,7 +9,7 @@ if exist "%OUTDIR%" rmdir /s /q "%OUTDIR%"
 if exist "%ZIPFILE%" del /f /q "%ZIPFILE%"
 
 pushd "%REPO_ROOT%\cdev"
-call "%REPO_ROOT%\node_modules\.bin\ng.cmd" build --configuration production --output-path="%OUTDIR%"
+node "%REPO_ROOT%\tools\build-angular.mjs" --workspace "%REPO_ROOT%\cdev" --target checknote:build:production --output "%OUTDIR%"
 set "BUILD_EXIT=%ERRORLEVEL%"
 popd
 if not "%BUILD_EXIT%"=="0" exit /b %BUILD_EXIT%

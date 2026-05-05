@@ -130,7 +130,7 @@ function readImports(source) {
 
 function resolveImport(fromFile, specifier) {
   if (!specifier.startsWith('.')) {
-    return specifier.startsWith('src/') ? resolveExisting(path.join(rootDir, specifier)) : null;
+    return specifier.startsWith('src/') ? resolveExisting(path.join(srcDir, specifier.slice('src/'.length))) : null;
   }
 
   return resolveExisting(path.resolve(path.dirname(fromFile), specifier));
@@ -152,23 +152,19 @@ function isInside(file, directory) {
 }
 
 function classify(file) {
-  const relative = toRepoPath(file);
+  const relative = toSourcePath(file);
   const parts = relative.split('/');
 
-  if (parts[0] !== 'src') {
-    return { area: 'external' };
-  }
-
-  if (parts[1] === 'app' || parts[1] === 'main.ts') {
+  if (parts[0] === 'app' || parts[0] === 'main.ts') {
     return { area: 'app' };
   }
 
-  if (parts[1] === 'common' && rules.layers.includes(parts[2])) {
-    return { area: 'common', layer: parts[2] };
+  if (parts[0] === 'common' && rules.layers.includes(parts[1])) {
+    return { area: 'common', layer: parts[1] };
   }
 
-  if (parts[1] === 'modules' && parts.length > 3 && rules.modules.includes(parts[2]) && rules.layers.includes(parts[3])) {
-    return { area: 'module', module: parts[2], layer: parts[3] };
+  if (parts[0] === 'modules' && parts.length > 2 && rules.modules.includes(parts[1]) && rules.layers.includes(parts[2])) {
+    return { area: 'module', module: parts[1], layer: parts[2] };
   }
 
   return { area: 'other' };
@@ -267,4 +263,8 @@ function addViolation(file, imported, reason) {
 
 function toRepoPath(file) {
   return path.relative(rootDir, file).replaceAll(path.sep, '/');
+}
+
+function toSourcePath(file) {
+  return path.relative(srcDir, file).replaceAll(path.sep, '/');
 }

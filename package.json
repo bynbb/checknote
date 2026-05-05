@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bazelisk build //:todo_app",
-    "check:architecture": "node tools/check-boundaries.mjs",
+    "build": "bazelisk build //cdev:todo_app",
+    "check:architecture": "node tools/check-boundaries.mjs --src-dir cdev/src",
     "test:architecture": "node tools/check-boundaries.test.mjs",
-    "serve": "ng serve --host 127.0.0.1 --port 4200",
-    "ng": "ng"
+    "serve": "cd cdev && ..\\node_modules\\.bin\\ng.cmd serve --host 127.0.0.1 --port 4200",
+    "ng": "cd cdev && ..\\node_modules\\.bin\\ng.cmd"
   },
   "dependencies": {
     "@angular/animations": "21.2.11",

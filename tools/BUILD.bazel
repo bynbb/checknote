@@ -10,3 +10,16 @@ filegroup(
     srcs = ["build-angular.bat"],
     visibility = ["//visibility:public"],
 )
+
+genrule(
+    name = "check_boundaries_test",
+    srcs = [
+        "architecture-rules.json",
+        "check-boundaries.test.mjs",
+        "check-boundaries.mjs",
+    ],
+    outs = ["check-boundaries-test.stamp"],
+    cmd = "node tools/check-boundaries.test.mjs && touch $@",
+    cmd_bat = "node tools\\check-boundaries.test.mjs && echo ok > $@",
+    visibility = ["//visibility:public"],
+)

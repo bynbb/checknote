@@ -1,0 +1,46 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "app_sources",
+    srcs = glob([
+        "public/**",
+        "src/**",
+    ]) + [
+        "angular.json",
+        "tsconfig.app.json",
+        "//:workspace_files",
+    ],
+)
+
+genrule(
+    name = "architecture_check",
+    srcs = glob(["src/**/*.ts"]) + [
+        "//tools:architecture-rules.json",
+        "//tools:check-boundaries.mjs",
+    ],
+    outs = ["architecture-check.stamp"],
+    cmd = "node tools/check-boundaries.mjs --src-dir cdev/src && touch $@",
+    cmd_bat = "node tools\\check-boundaries.mjs --src-dir cdev\\src && echo ok > $@",
+)
+
+genrule(
+    name = "todo_app",
+    srcs = [
+        ":app_sources",
+        ":architecture_check",
+        "//tools:check_boundaries_test",
+    ],
+    tools = ["//tools:build_angular_bat"],
+    outs = ["todo-app.zip"],
+    cmd = """
+set -euo pipefail
+OUTDIR="$$(pwd)/$(@D)/todo-app"
+ZIPFILE="$$(pwd)/$@"
+rm -rf "$$OUTDIR"
+cd cdev
+../node_modules/.bin/ng build --configuration production --output-path="$$OUTDIR"
+cd "$$OUTDIR"
+zip -qr "$$ZIPFILE" .
+""",
+    cmd_bat = "call $(location //tools:build_angular_bat) \"$(@D)\\todo-app\" \"$@\"",
+)

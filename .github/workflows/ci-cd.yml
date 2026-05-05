@@ -34,7 +34,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $bazelBin = (& npx bazelisk info bazel-bin).Trim()
-          $artifactPath = Join-Path $bazelBin 'todo-app.zip'
+          $artifactPath = Join-Path $bazelBin 'cdev\todo-app.zip'
           if (!(Test-Path $artifactPath)) {
             throw "Expected Bazel artifact was not found: $artifactPath"
           }

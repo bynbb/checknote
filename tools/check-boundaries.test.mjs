@@ -41,6 +41,16 @@ const cases = [
     includes: 'application may not depend on infrastructure.',
   },
   {
+    name: 'rejects source-root imports through configured src dir',
+    files: {
+      'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',
+      'src/modules/todos/application/use-case.ts':
+        "import { LocalStorageTodoRepository } from 'src/modules/todos/infrastructure/local-storage-todo-repository';\nexport const repo = LocalStorageTodoRepository;\n",
+    },
+    status: 1,
+    includes: 'application may not depend on infrastructure.',
+  },
+  {
     name: 'rejects presentation importing infrastructure',
     files: {
       'src/modules/todos/infrastructure/local-storage-todo-repository.ts': 'export class LocalStorageTodoRepository {}\n',

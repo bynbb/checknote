@@ -75,6 +75,10 @@ jobs:
           if (!(Test-Path deploy/browser/index.html)) {
             throw 'Expected deploy/browser/index.html was not found.'
           }
+          $indexHtml = Get-Content deploy/browser/index.html -Raw
+          if ($indexHtml -notmatch '<script[^>]+src="[^"]+\.js"') {
+            throw 'Expected deploy/browser/index.html to reference a JavaScript bundle.'
+          }
 
       - name: Configure SSH
         env:

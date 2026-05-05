@@ -13,7 +13,7 @@ import {
   DELETE_TODO_HANDLER,
   GET_TODOS_HANDLER,
   TOGGLE_TODO_HANDLER,
-} from '@cdev/modules/todos/composition/todos.tokens';
+} from '@cdev/modules/todos/composition/todos/todos.tokens';
 
 @Injectable()
 export class TodosPageFacade {

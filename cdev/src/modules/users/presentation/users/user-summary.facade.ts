@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { GetCurrentUserQuery } from '@cdev/modules/users/application';
-import { GET_CURRENT_USER_HANDLER } from '@cdev/modules/users/composition/users.tokens';
+import { GET_CURRENT_USER_HANDLER } from '@cdev/modules/users/composition/users/users.tokens';
 import { User } from '@cdev/modules/users/domain';
 
 @Injectable()

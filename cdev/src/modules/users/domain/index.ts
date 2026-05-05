@@ -1,2 +1,2 @@
-export type { UserId } from './user-id';
-export type { User } from './user';
+export type { UserId } from './users/user-id';
+export type { User } from './users/user';

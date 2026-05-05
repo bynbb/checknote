@@ -1,2 +1,2 @@
-export { TodosPageComponent } from './todos-page.component';
-export { TodosPageFacade } from './todos-page.facade';
+export { TodosPageComponent } from './todos/todos-page.component';
+export { TodosPageFacade } from './todos/todos-page.facade';

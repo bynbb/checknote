@@ -1,2 +1,2 @@
-export { UserSummaryComponent } from './user-summary.component';
-export { UserSummaryFacade } from './user-summary.facade';
+export { UserSummaryComponent } from './users/user-summary.component';
+export { UserSummaryFacade } from './users/user-summary.facade';

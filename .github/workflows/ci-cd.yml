@@ -82,7 +82,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $bazelBin = (& npx bazelisk info bazel-bin).Trim()
-          $artifactPath = Join-Path $bazelBin 'api\src\Checknote.Api\checknote-site.zip'
+          $artifactPath = Join-Path $bazelBin 'api\src\App\checknote-site.zip'
           if (!(Test-Path $artifactPath)) {
             throw "Expected Bazel site artifact was not found: $artifactPath"
           }

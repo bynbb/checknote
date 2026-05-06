@@ -1,0 +1,12 @@
+load("@rules_dotnet//dotnet:defs.bzl", "csharp_library")
+
+package(default_visibility = ["//visibility:private"])
+
+csharp_library(
+    name = "application",
+    srcs = glob(["**/*.cs"]),
+    deps = ["//api/src/Common/Domain:domain"],
+    out = "Checknote.Common.Application",
+    target_frameworks = ["net9.0"],
+    visibility = ["//api:common_application_consumers"],
+)

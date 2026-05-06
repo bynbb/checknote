@@ -1,5 +1,6 @@
 namespace Checknote.Api;
 
+using Checknote.Modules.Todos.Composition.Todos;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,9 +19,12 @@ public static class ChecknoteApi
 
     public static WebApplication Build(WebApplicationBuilder builder)
     {
+        builder.Services.AddTodosModule();
+
         WebApplication app = builder.Build();
 
         MapApiRoutes(app);
+        app.MapTodosModule();
         MapStaticSite(app);
 
         return app;
@@ -61,6 +65,7 @@ public static class ChecknoteApi
 
             if (context.Response.HasStarted ||
                 context.Response.StatusCode != StatusCodes.Status404NotFound ||
+                context.Request.Path.StartsWithSegments("/api") ||
                 Path.HasExtension(context.Request.Path))
             {
                 return;

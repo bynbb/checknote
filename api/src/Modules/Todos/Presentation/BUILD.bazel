@@ -1,0 +1,17 @@
+load("@rules_dotnet//dotnet:defs.bzl", "csharp_library")
+
+package(default_visibility = ["//visibility:private"])
+
+csharp_library(
+    name = "presentation",
+    srcs = glob(["**/*.cs"]),
+    deps = [
+        "//api/src/Modules/Todos/Application:application",
+        "//api/src/Modules/Todos/Domain:domain",
+    ],
+    out = "Checknote.Modules.Todos.Presentation",
+    project_sdk = "web",
+    run_analyzers = False,
+    target_frameworks = ["net9.0"],
+    visibility = ["//api:todos_presentation_consumers"],
+)

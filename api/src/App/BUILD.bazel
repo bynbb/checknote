@@ -1,4 +1,4 @@
-load("@rules_dotnet//dotnet:defs.bzl", "csharp_binary", "csharp_library", "csharp_test", "publish_binary")
+load("@rules_dotnet//dotnet:defs.bzl", "csharp_binary", "csharp_library", "publish_binary")
 load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 
 package(default_visibility = ["//visibility:public"])
@@ -6,6 +6,8 @@ package(default_visibility = ["//visibility:public"])
 csharp_library(
     name = "api_lib",
     srcs = ["ChecknoteApi.cs"],
+    deps = ["//api/src/Modules/Todos/Composition:composition"],
+    out = "Checknote.Api",
     project_sdk = "web",
     target_frameworks = ["net9.0"],
 )
@@ -15,16 +17,6 @@ csharp_binary(
     srcs = ["Program.cs"],
     appsetting_files = ["appsettings.json"],
     deps = [":api_lib"],
-    project_sdk = "web",
-    target_frameworks = ["net9.0"],
-)
-
-csharp_test(
-    name = "hello_world_route_test",
-    srcs = [
-        "ChecknoteApi.cs",
-        "HelloWorldRouteTest.cs",
-    ],
     project_sdk = "web",
     target_frameworks = ["net9.0"],
 )
@@ -71,5 +63,14 @@ zip -qr "$$OUT" .
 """,
     cmd_bat = """
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = (Resolve-Path '$(@D)').Path; $$out = Join-Path $$outDir 'checknote-site.zip'; $$siteDir = Join-Path $$outDir 'checknote-site'; $$frontendDir = Join-Path $$outDir 'checknote-frontend'; Remove-Item -LiteralPath $$siteDir, $$frontendDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force -Path (Join-Path $$siteDir 'wwwroot'), $$frontendDir | Out-Null; Expand-Archive -Path '$(location :checknote_api_zip)' -DestinationPath $$siteDir -Force; Expand-Archive -Path '$(location //cdev:todo_app)' -DestinationPath $$frontendDir -Force; if (!(Test-Path (Join-Path $$frontendDir 'browser\\index.html'))) { throw 'Expected Angular index.html was not found.' }; Copy-Item -Path (Join-Path $$frontendDir 'browser\\*') -Destination (Join-Path $$siteDir 'wwwroot') -Recurse -Force; if (!(Test-Path (Join-Path $$siteDir 'web.config'))) { throw 'Expected API web.config was not found.' }; if (!(Test-Path (Join-Path $$siteDir 'wwwroot\\index.html'))) { throw 'Expected merged wwwroot/index.html was not found.' }; Compress-Archive -Path (Join-Path $$siteDir '*') -DestinationPath $$out -Force"
+""",
+)
+
+genrule(
+    name = "api_route_smoke_check",
+    srcs = [":checknote_site_zip"],
+    outs = ["api-route-smoke.stamp"],
+    cmd_bat = """
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = (Resolve-Path '$(@D)').Path; $$smokeDir = Join-Path $$outDir 'api-route-smoke'; Remove-Item -LiteralPath $$smokeDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force -Path $$smokeDir | Out-Null; Expand-Archive -Path '$(location :checknote_site_zip)' -DestinationPath $$smokeDir -Force; if (!(Test-Path (Join-Path $$smokeDir 'checknote_api.exe'))) { throw 'Expected checknote_api.exe was not found.' }; if (!(Test-Path (Join-Path $$smokeDir 'wwwroot\\index.html'))) { throw 'Expected wwwroot/index.html was not found.' }; $$listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0); $$listener.Start(); $$port = $$listener.LocalEndpoint.Port; $$listener.Stop(); $$oldUrls = $$env:ASPNETCORE_URLS; $$env:ASPNETCORE_URLS = 'http://127.0.0.1:' + $$port; $$proc = $$null; try { $$proc = Start-Process -FilePath (Join-Path $$smokeDir 'checknote_api.exe') -WorkingDirectory $$smokeDir -WindowStyle Hidden -PassThru; $$base = 'http://127.0.0.1:' + $$port; $$started = $$false; foreach ($$attempt in 1..30) { try { $$health = Invoke-WebRequest -Uri ($$base + '/health') -UseBasicParsing -TimeoutSec 2; if ($$health.StatusCode -eq 200) { $$started = $$true; break } } catch { Start-Sleep -Milliseconds 500 } }; if (-not $$started) { throw 'Smoke server did not start.' }; $$hello = Invoke-WebRequest -Uri ($$base + '/hello-world') -UseBasicParsing -TimeoutSec 5; if ($$hello.Content.Trim() -ne 'Hello from Checknote API') { throw 'Unexpected /hello-world response: ' + $$hello.Content }; $$todos = Invoke-WebRequest -Uri ($$base + '/api/todos') -UseBasicParsing -TimeoutSec 5; if ($$todos.StatusCode -ne 200 -or $$todos.Content -notmatch 'Seed the Checknote API module') { throw 'Unexpected /api/todos response: ' + $$todos.Content }; Set-Content -LiteralPath '$@' -Value 'ok' -NoNewline } finally { if ($$proc -and -not $$proc.HasExited) { Stop-Process -Id $$proc.Id -Force }; $$env:ASPNETCORE_URLS = $$oldUrls }"
 """,
 )

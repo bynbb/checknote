@@ -1,16 +1,68 @@
 package(default_visibility = ["//visibility:public"])
 
+package_group(
+    name = "api_package",
+    packages = ["//api/src/App"],
+)
+
+package_group(
+    name = "common_domain_consumers",
+    packages = [
+        "//api/src/Common/Application",
+        "//api/src/Modules/Todos/Domain",
+    ],
+)
+
+package_group(
+    name = "common_application_consumers",
+    packages = ["//api/src/Modules/Todos/Application"],
+)
+
+package_group(
+    name = "todos_domain_consumers",
+    packages = [
+        "//api/src/Modules/Todos/Application",
+        "//api/src/Modules/Todos/Composition",
+        "//api/src/Modules/Todos/Infrastructure",
+        "//api/src/Modules/Todos/Presentation",
+    ],
+)
+
+package_group(
+    name = "todos_application_consumers",
+    packages = [
+        "//api/src/Modules/Todos/Composition",
+        "//api/src/Modules/Todos/Infrastructure",
+        "//api/src/Modules/Todos/Presentation",
+    ],
+)
+
+package_group(
+    name = "todos_infrastructure_consumers",
+    packages = ["//api/src/Modules/Todos/Composition"],
+)
+
+package_group(
+    name = "todos_presentation_consumers",
+    packages = ["//api/src/Modules/Todos/Composition"],
+)
+
+package_group(
+    name = "todos_composition_consumers",
+    packages = ["//api/src/App"],
+)
+
 alias(
     name = "checknote_api",
-    actual = "//api/src/Checknote.Api:checknote_api",
+    actual = "//api/src/App:checknote_api",
 )
 
 alias(
     name = "checknote_api_zip",
-    actual = "//api/src/Checknote.Api:checknote_api_zip",
+    actual = "//api/src/App:checknote_api_zip",
 )
 
 alias(
     name = "checknote_site_zip",
-    actual = "//api/src/Checknote.Api:checknote_site_zip",
+    actual = "//api/src/App:checknote_site_zip",
 )

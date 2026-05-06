@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bazelisk build //cdev:todo_app",
+    "build": "bazelisk build //api:checknote_site_zip",
+    "test:api": "bazelisk test //api/src/Checknote.Api:hello_world_route_test",
     "check:architecture": "node tools/check-boundaries.mjs --src-dir cdev/src",
     "test:architecture": "node tools/check-boundaries.test.mjs",
     "serve": "cd cdev && ..\\node_modules\\.bin\\ng.cmd serve --host 127.0.0.1 --port 4200",

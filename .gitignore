@@ -8,5 +8,14 @@ bazel-*
 dist/
 out-tsc/
 artifacts/
+tmp-api-publish/
+
+[Bb]in/
+[Oo]bj/
+TestResults/
+*.user
+*.suo
+*.nupkg
+*.snupkg
 
 pm/

@@ -22,3 +22,23 @@ alias(
     name = "todo_app",
     actual = "//cdev:todo_app",
 )
+
+alias(
+    name = "checknote_api",
+    actual = "//api:checknote_api",
+)
+
+alias(
+    name = "checknote_api_zip",
+    actual = "//api:checknote_api_zip",
+)
+
+alias(
+    name = "checknote_site_zip",
+    actual = "//api:checknote_site_zip",
+)
+
+alias(
+    name = "hello_world_csharp_smoke",
+    actual = "//api:hello_world_csharp_smoke",
+)

@@ -63,29 +63,37 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build with Bazel
         run: npm run build
 
+      - name: Test Checknote API
+        run: npm run test:api
+
       - name: Stage build artifact
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $bazelBin = (& npx bazelisk info bazel-bin).Trim()
-          $artifactPath = Join-Path $bazelBin 'cdev\todo-app.zip'
+          $artifactPath = Join-Path $bazelBin 'api\src\Checknote.Api\checknote-site.zip'
           if (!(Test-Path $artifactPath)) {
-            throw "Expected Bazel artifact was not found: $artifactPath"
+            throw "Expected Bazel site artifact was not found: $artifactPath"
           }
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Copy-Item -LiteralPath $artifactPath -Destination artifacts/todo-app.zip -Force
+          Copy-Item -LiteralPath $artifactPath -Destination artifacts/checknote-site.zip -Force
 
-      - name: Upload build artifact
+      - name: Upload Checknote site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: todo-app
-          path: artifacts/todo-app.zip
+          name: checknote-site
+          path: artifacts/checknote-site.zip
           if-no-files-found: error
           retention-days: 14
 
@@ -100,24 +108,31 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - name: Download build artifact
+      - name: Download Checknote site artifact
         uses: actions/download-artifact@v4
         with:
-          name: todo-app
-          path: artifact
+          name: checknote-site
+          path: artifact/site
 
-      - name: Unpack static site
+      - name: Unpack Checknote site
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           New-Item -ItemType Directory -Force -Path deploy | Out-Null
-          Expand-Archive -Path artifact/todo-app.zip -DestinationPath deploy -Force
-          if (!(Test-Path deploy/browser/index.html)) {
-            throw 'Expected deploy/browser/index.html was not found.'
+          Expand-Archive -Path artifact/site/checknote-site.zip -DestinationPath deploy -Force
+          if (!(Test-Path deploy/web.config)) {
+            throw 'Expected deploy/web.config was not found.'
           }
-          $indexHtml = Get-Content deploy/browser/index.html -Raw
+          if (!(Test-Path deploy/wwwroot/index.html)) {
+            throw 'Expected deploy/wwwroot/index.html was not found.'
+          }
+          $indexHtml = Get-Content deploy/wwwroot/index.html -Raw
           if ($indexHtml -notmatch '<script[^>]+src="[^"]+\.js"') {
-            throw 'Expected deploy/browser/index.html to reference a JavaScript bundle.'
+            throw 'Expected deploy/wwwroot/index.html to reference a JavaScript bundle.'
+          }
+          $apiExe = @(Get-ChildItem -Path deploy -Filter *.exe -File)
+          if ($apiExe.Count -eq 0) {
+            throw 'Expected the self-contained API publish output to include an executable.'
           }
 
       - name: Configure SSH
@@ -144,13 +159,13 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
           $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
-          $remoteZipPath = "$remoteDeployPath/site.zip"
+          $remoteZipPath = "$remoteDeployPath/checknote-site.zip"
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
 
-          Compress-Archive -Path deploy/browser/* -DestinationPath site.zip -Force
+          Compress-Archive -Path deploy/* -DestinationPath checknote-site.zip -Force
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -Command `"New-Item -ItemType Directory -Force -Path '$remoteDeployPath' | Out-Null`""
-          scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT site.zip "${remote}:$remoteZipPath"
+          scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT checknote-site.zip "${remote}:$remoteZipPath"
 
       - name: Publish staged files
         timeout-minutes: 5
@@ -170,15 +185,61 @@ jobs:
           `$ErrorActionPreference = 'Stop'
           `$site = '$env:WEB_SERVER_REMOTE_PATH'
           `$stage = '$remoteDeployPath'
+          `$expanded = Join-Path `$stage 'site'
           `$backup = Join-Path `$site ('.backups/' + (Get-Date -Format 'yyyyMMddHHmmss'))
-          New-Item -ItemType Directory -Force -Path `$site, `$backup | Out-Null
-          Expand-Archive -Path (Join-Path `$stage 'site.zip') -DestinationPath `$stage -Force
+          New-Item -ItemType Directory -Force -Path `$site, `$backup, `$expanded | Out-Null
+          Expand-Archive -Path (Join-Path `$stage 'checknote-site.zip') -DestinationPath `$expanded -Force
+          if (!(Test-Path (Join-Path `$expanded 'web.config'))) {
+            throw 'Expected site artifact web.config was not found.'
+          }
+          if (!(Test-Path (Join-Path `$expanded 'wwwroot\index.html'))) {
+            throw 'Expected site artifact wwwroot/index.html was not found.'
+          }
+          Set-Content -LiteralPath (Join-Path `$site 'app_offline.htm') -Value 'Deploying Checknote' -NoNewline
+          Start-Sleep -Seconds 2
           Get-ChildItem -LiteralPath `$site -Force | Where-Object {
-            `$_.Name -notin @('.deploy', '.backups', '.htaccess', 'web.config')
+            `$_.Name -notin @('.deploy', '.backups', '.htaccess')
           } | ForEach-Object {
             Move-Item -LiteralPath `$_.FullName -Destination `$backup -Force
           }
-          Copy-Item -Path (Join-Path `$stage '*') -Destination `$site -Recurse -Force -Exclude @('site.zip', 'web.config', '.htaccess')
+          Copy-Item -Path (Join-Path `$expanded '*') -Destination `$site -Recurse -Force
           "@
           $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($publishScript))
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"
+
+      - name: Verify hello-world API
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = 'https://www.checknote.io/hello-world'
+          $expected = 'Hello from Checknote API'
+          for ($attempt = 1; $attempt -le 6; $attempt++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20
+              $body = $response.Content.Trim()
+              if ($response.StatusCode -eq 200 -and $body -eq $expected) {
+                Write-Host "Verified $url"
+                exit 0
+              }
+              Write-Host "Attempt $attempt returned status $($response.StatusCode) and body '$body'"
+            }
+            catch {
+              Write-Host "Attempt $attempt failed: $($_.Exception.Message)"
+            }
+            Start-Sleep -Seconds 5
+          }
+          throw "Expected $url to return '$expected'."
+
+      - name: Verify Angular app
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = 'https://www.checknote.io/'
+          $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20
+          if ($response.StatusCode -ne 200) {
+            throw "Expected $url to return 200 OK."
+          }
+          if ($response.Content -notmatch '<script[^>]+src="[^"]+\.js"') {
+            throw "Expected $url to return the Angular app shell."
+          }
+          Write-Host "Verified $url"

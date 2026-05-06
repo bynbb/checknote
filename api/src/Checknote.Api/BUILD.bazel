@@ -1,0 +1,75 @@
+load("@rules_dotnet//dotnet:defs.bzl", "csharp_binary", "csharp_library", "csharp_test", "publish_binary")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
+
+package(default_visibility = ["//visibility:public"])
+
+csharp_library(
+    name = "api_lib",
+    srcs = ["ChecknoteApi.cs"],
+    project_sdk = "web",
+    target_frameworks = ["net9.0"],
+)
+
+csharp_binary(
+    name = "checknote_api",
+    srcs = ["Program.cs"],
+    appsetting_files = ["appsettings.json"],
+    deps = [":api_lib"],
+    project_sdk = "web",
+    target_frameworks = ["net9.0"],
+)
+
+csharp_test(
+    name = "hello_world_route_test",
+    srcs = [
+        "ChecknoteApi.cs",
+        "HelloWorldRouteTest.cs",
+    ],
+    project_sdk = "web",
+    target_frameworks = ["net9.0"],
+)
+
+publish_binary(
+    name = "checknote_api_publish",
+    binary = ":checknote_api",
+    self_contained = True,
+    target_framework = "net9.0",
+)
+
+pkg_zip(
+    name = "checknote_api_zip",
+    srcs = [
+        ":checknote_api_publish",
+        "web.config",
+    ],
+    out = "checknote-api.zip",
+)
+
+genrule(
+    name = "checknote_site_zip",
+    srcs = [
+        ":checknote_api_zip",
+        "//cdev:todo_app",
+    ],
+    outs = ["checknote-site.zip"],
+    cmd = """
+set -euo pipefail
+OUT="$$(pwd)/$@"
+OUT_DIR="$$(pwd)/$(@D)"
+SITE_DIR="$$OUT_DIR/checknote-site"
+FRONTEND_DIR="$$OUT_DIR/checknote-frontend"
+rm -rf "$$SITE_DIR" "$$FRONTEND_DIR"
+mkdir -p "$$SITE_DIR/wwwroot" "$$FRONTEND_DIR"
+unzip -q "$(location :checknote_api_zip)" -d "$$SITE_DIR"
+unzip -q "$(location //cdev:todo_app)" -d "$$FRONTEND_DIR"
+test -f "$$FRONTEND_DIR/browser/index.html"
+cp -R "$$FRONTEND_DIR/browser/." "$$SITE_DIR/wwwroot/"
+test -f "$$SITE_DIR/web.config"
+test -f "$$SITE_DIR/wwwroot/index.html"
+cd "$$SITE_DIR"
+zip -qr "$$OUT" .
+""",
+    cmd_bat = """
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = (Resolve-Path '$(@D)').Path; $$out = Join-Path $$outDir 'checknote-site.zip'; $$siteDir = Join-Path $$outDir 'checknote-site'; $$frontendDir = Join-Path $$outDir 'checknote-frontend'; Remove-Item -LiteralPath $$siteDir, $$frontendDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force -Path (Join-Path $$siteDir 'wwwroot'), $$frontendDir | Out-Null; Expand-Archive -Path '$(location :checknote_api_zip)' -DestinationPath $$siteDir -Force; Expand-Archive -Path '$(location //cdev:todo_app)' -DestinationPath $$frontendDir -Force; if (!(Test-Path (Join-Path $$frontendDir 'browser\\index.html'))) { throw 'Expected Angular index.html was not found.' }; Copy-Item -Path (Join-Path $$frontendDir 'browser\\*') -Destination (Join-Path $$siteDir 'wwwroot') -Recurse -Force; if (!(Test-Path (Join-Path $$siteDir 'web.config'))) { throw 'Expected API web.config was not found.' }; if (!(Test-Path (Join-Path $$siteDir 'wwwroot\\index.html'))) { throw 'Expected merged wwwroot/index.html was not found.' }; Compress-Archive -Path (Join-Path $$siteDir '*') -DestinationPath $$out -Force"
+""",
+)

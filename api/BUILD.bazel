@@ -1,0 +1,16 @@
+package(default_visibility = ["//visibility:public"])
+
+alias(
+    name = "checknote_api",
+    actual = "//api/src/Checknote.Api:checknote_api",
+)
+
+alias(
+    name = "checknote_api_zip",
+    actual = "//api/src/Checknote.Api:checknote_api_zip",
+)
+
+alias(
+    name = "checknote_site_zip",
+    actual = "//api/src/Checknote.Api:checknote_site_zip",
+)

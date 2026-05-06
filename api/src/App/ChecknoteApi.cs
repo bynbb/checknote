@@ -1,6 +1,7 @@
 namespace Checknote.Api;
 
 using Checknote.Modules.Todos.Composition.Todos;
+using Checknote.Modules.Users.Composition.Users;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -20,11 +21,13 @@ public static class ChecknoteApi
     public static WebApplication Build(WebApplicationBuilder builder)
     {
         builder.Services.AddTodosModule();
+        builder.Services.AddUsersModule();
 
         WebApplication app = builder.Build();
 
         MapApiRoutes(app);
         app.MapTodosModule();
+        app.MapUsersModule();
         MapStaticSite(app);
 
         return app;

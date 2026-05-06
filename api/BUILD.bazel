@@ -10,12 +10,16 @@ package_group(
     packages = [
         "//api/src/Common/Application",
         "//api/src/Modules/Todos/Domain",
+        "//api/src/Modules/Users/Domain",
     ],
 )
 
 package_group(
     name = "common_application_consumers",
-    packages = ["//api/src/Modules/Todos/Application"],
+    packages = [
+        "//api/src/Modules/Todos/Application",
+        "//api/src/Modules/Users/Application",
+    ],
 )
 
 package_group(
@@ -49,6 +53,40 @@ package_group(
 
 package_group(
     name = "todos_composition_consumers",
+    packages = ["//api/src/App"],
+)
+
+package_group(
+    name = "users_domain_consumers",
+    packages = [
+        "//api/src/Modules/Users/Application",
+        "//api/src/Modules/Users/Composition",
+        "//api/src/Modules/Users/Infrastructure",
+        "//api/src/Modules/Users/Presentation",
+    ],
+)
+
+package_group(
+    name = "users_application_consumers",
+    packages = [
+        "//api/src/Modules/Users/Composition",
+        "//api/src/Modules/Users/Infrastructure",
+        "//api/src/Modules/Users/Presentation",
+    ],
+)
+
+package_group(
+    name = "users_infrastructure_consumers",
+    packages = ["//api/src/Modules/Users/Composition"],
+)
+
+package_group(
+    name = "users_presentation_consumers",
+    packages = ["//api/src/Modules/Users/Composition"],
+)
+
+package_group(
+    name = "users_composition_consumers",
     packages = ["//api/src/App"],
 )
 

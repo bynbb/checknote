@@ -1,0 +1,17 @@
+load("@rules_dotnet//dotnet:defs.bzl", "csharp_library")
+
+package(default_visibility = ["//visibility:private"])
+
+csharp_library(
+    name = "composition",
+    srcs = glob(["**/*.cs"]),
+    deps = [
+        "//api/src/Modules/Users/Application:application",
+        "//api/src/Modules/Users/Infrastructure:infrastructure",
+        "//api/src/Modules/Users/Presentation:presentation",
+    ],
+    out = "Checknote.Modules.Users.Composition",
+    project_sdk = "web",
+    target_frameworks = ["net9.0"],
+    visibility = ["//api:users_composition_consumers"],
+)

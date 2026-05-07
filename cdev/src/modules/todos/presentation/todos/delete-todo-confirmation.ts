@@ -1,24 +1,35 @@
+import { ConfirmationDialog, ConfirmationRequest } from '../../../../common/application';
+
 interface ConfirmableTodo {
   readonly id: number;
   readonly title: string;
 }
 
-type ConfirmDialog = (message: string) => boolean;
 type DeleteTodo = (todoId: number) => Promise<void> | void;
 
-export function confirmTodoDeletion(
+export function createDeleteTodoConfirmationRequest(todo: ConfirmableTodo): ConfirmationRequest {
+  return {
+    title: 'Delete todo?',
+    message: `Delete "${todo.title}"? This cannot be undone.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    tone: 'danger',
+  };
+}
+
+export async function confirmTodoDeletion(
   todo: ConfirmableTodo,
-  confirm: ConfirmDialog = (message) => window.confirm(message),
-): boolean {
-  return confirm(`Delete "${todo.title}"?`);
+  confirmationDialog: ConfirmationDialog,
+): Promise<boolean> {
+  return confirmationDialog.confirm(createDeleteTodoConfirmationRequest(todo));
 }
 
 export async function deleteTodoAfterConfirmation(
   todo: ConfirmableTodo,
+  confirmationDialog: ConfirmationDialog,
   deleteTodo: DeleteTodo,
-  confirm?: ConfirmDialog,
 ): Promise<boolean> {
-  if (!confirmTodoDeletion(todo, confirm)) {
+  if (!(await confirmTodoDeletion(todo, confirmationDialog))) {
     return false;
   }
 

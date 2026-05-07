@@ -1,21 +1,16 @@
 import {
   confirmTodoDeletion,
+  createDeleteTodoConfirmationRequest,
   deleteTodoAfterConfirmation,
 } from '../../../../../../src/modules/todos/presentation/todos/delete-todo-confirmation';
 
-const messages: string[] = [];
+const request = createDeleteTodoConfirmationRequest({ id: 42, title: 'Ship the slice' });
 
-const confirmed = confirmTodoDeletion({ id: 42, title: 'Ship the slice' }, (message) => {
-  messages.push(message);
-  return true;
-});
-
-equal(true, confirmed, 'delete confirmation should return true when user confirms');
-equal('Delete "Ship the slice"?', messages[0], 'delete confirmation message');
-
-const canceled = confirmTodoDeletion({ id: 43, title: 'Keep the slice' }, () => false);
-
-equal(false, canceled, 'delete confirmation should return false when user cancels');
+equal('Delete todo?', request.title, 'delete confirmation title');
+equal('Delete "Ship the slice"? This cannot be undone.', request.message, 'delete confirmation message');
+equal('Delete', request.confirmText, 'delete confirmation action label');
+equal('Cancel', request.cancelText, 'delete confirmation cancel label');
+equal('danger', request.tone, 'delete confirmation tone');
 
 runAsyncTests()
   .then(() => {
@@ -27,13 +22,30 @@ runAsyncTests()
   });
 
 async function runAsyncTests(): Promise<void> {
+  const confirmationRequests: unknown[] = [];
+  const confirmed = await confirmTodoDeletion({ id: 42, title: 'Ship the slice' }, {
+    confirm: (confirmationRequest) => {
+      confirmationRequests.push(confirmationRequest);
+      return Promise.resolve(true);
+    },
+  });
+
+  equal(true, confirmed, 'delete confirmation should return true when user confirms');
+  equal(1, confirmationRequests.length, 'delete confirmation should open one confirmation request');
+
+  const canceled = await confirmTodoDeletion({ id: 43, title: 'Keep the slice' }, {
+    confirm: () => Promise.resolve(false),
+  });
+
+  equal(false, canceled, 'delete confirmation should return false when user cancels');
+
   const deletedIds: number[] = [];
   const deleteConfirmed = await deleteTodoAfterConfirmation(
     { id: 42, title: 'Ship the slice' },
+    { confirm: () => Promise.resolve(true) },
     (todoId) => {
       deletedIds.push(todoId);
     },
-    () => true,
   );
 
   equal(true, deleteConfirmed, 'delete flow should report deletion after confirmation');
@@ -42,10 +54,10 @@ async function runAsyncTests(): Promise<void> {
   const canceledIds: number[] = [];
   const deleteCanceled = await deleteTodoAfterConfirmation(
     { id: 43, title: 'Keep the slice' },
+    { confirm: () => Promise.resolve(false) },
     (todoId) => {
       canceledIds.push(todoId);
     },
-    () => false,
   );
 
   equal(false, deleteCanceled, 'delete flow should report no deletion after cancellation');

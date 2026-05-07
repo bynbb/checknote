@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { CONFIRMATION_DIALOG } from '@cdev/common/composition/confirmations/confirmation-dialog.token';
 import { ERROR_REPORTER } from '@cdev/common/composition/errors/error-reporter.token';
 import {
   AddTodoCommand,
@@ -24,6 +25,7 @@ export class TodosPageFacade {
   private readonly toggleTodoHandler = inject(TOGGLE_TODO_HANDLER);
   private readonly deleteTodoHandler = inject(DELETE_TODO_HANDLER);
   private readonly clearCompletedHandler = inject(CLEAR_COMPLETED_HANDLER);
+  private readonly confirmationDialog = inject(CONFIRMATION_DIALOG);
   private readonly errors = inject(ERROR_REPORTER);
 
   readonly newTodo = signal('');
@@ -83,8 +85,10 @@ export class TodosPageFacade {
     this.errors.clear();
 
     try {
-      const deleted = await deleteTodoAfterConfirmation(todo, (todoId) =>
-        this.deleteTodoHandler.handle(new DeleteTodoCommand(todoId)),
+      const deleted = await deleteTodoAfterConfirmation(
+        todo,
+        this.confirmationDialog,
+        (todoId) => this.deleteTodoHandler.handle(new DeleteTodoCommand(todoId)),
       );
 
       if (deleted) {

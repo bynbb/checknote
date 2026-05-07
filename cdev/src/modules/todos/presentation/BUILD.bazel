@@ -10,6 +10,7 @@ cdev_layer(
     module = "todos",
     srcs = glob(["**/*.ts"]),
     deps = [
+        "//cdev/src/common/composition:tokens",
         "//cdev/src/modules/todos/application",
         "//cdev/src/modules/todos/composition:tokens",
         "//cdev/src/modules/todos/domain",

@@ -1,10 +1,12 @@
 namespace Checknote.Api;
 
+using Checknote.Api.Middleware;
 using Checknote.Modules.Todos.Composition.Todos;
 using Checknote.Modules.Users.Composition.Users;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 public static class ChecknoteApi
 {
@@ -20,11 +22,14 @@ public static class ChecknoteApi
 
     public static WebApplication Build(WebApplicationBuilder builder)
     {
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
         builder.Services.AddTodosModule();
         builder.Services.AddUsersModule();
 
         WebApplication app = builder.Build();
 
+        app.UseExceptionHandler();
         MapApiRoutes(app);
         app.MapTodosModule();
         app.MapUsersModule();

@@ -193,8 +193,8 @@ function validateInternalImport(file, target, from, to) {
       addViolation(file, target, 'app may import module composition exports and presentation entry points only.');
     }
 
-    if (to.area === 'common' && to.layer !== 'composition') {
-      addViolation(file, target, 'app may import common composition exports only.');
+    if (to.area === 'common' && !['composition', 'presentation'].includes(to.layer)) {
+      addViolation(file, target, 'app may import common composition exports and presentation entry points only.');
     }
 
     return;

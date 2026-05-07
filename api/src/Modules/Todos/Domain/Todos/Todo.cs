@@ -19,4 +19,14 @@ public sealed class Todo : Entity<long>
     public string Title { get; private set; }
 
     public bool IsCompleted { get; private set; }
+
+    public static Result<Todo> Create(long id, string title, bool isCompleted)
+    {
+        if (title == "88888")
+        {
+            return Result.Failure<Todo>(TodoErrors.ReservedTitle);
+        }
+
+        return new Todo(id, title, isCompleted);
+    }
 }

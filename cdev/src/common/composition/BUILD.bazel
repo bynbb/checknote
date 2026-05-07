@@ -3,14 +3,26 @@ load("//tools:cdev_architecture.bzl", "cdev_layer")
 package(default_visibility = ["//visibility:private"])
 
 cdev_layer(
+    name = "tokens",
+    area = "common",
+    layer = "composition",
+    role = "tokens",
+    srcs = glob(["**/*.token.ts"]),
+    deps = ["//cdev/src/common/application"],
+    visibility = ["//cdev:all_cdev_packages"],
+)
+
+cdev_layer(
     name = "composition",
     area = "common",
     layer = "composition",
-    srcs = glob(["**/*.ts"]),
+    srcs = glob(["**/*.ts"], exclude = ["**/*.token.ts"]),
     deps = [
+        ":tokens",
         "//cdev/src/common/application",
         "//cdev/src/common/domain",
         "//cdev/src/common/infrastructure",
+        "//cdev/src/common/presentation",
     ],
     visibility = ["//cdev:app_package"],
 )

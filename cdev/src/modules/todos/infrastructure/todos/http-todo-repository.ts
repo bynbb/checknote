@@ -1,3 +1,4 @@
+import { ensureOk } from '@cdev/common/infrastructure';
 import { TodoRepository } from '@cdev/modules/todos/application';
 import { Todo } from '@cdev/modules/todos/domain';
 
@@ -17,9 +18,7 @@ export class HttpTodoRepository implements TodoRepository {
   async getAll(): Promise<Todo[]> {
     const response = await fetch(this.route);
 
-    if (!response.ok) {
-      throw new Error(`Could not load todos: ${response.status}`);
-    }
+    await ensureOk(response, 'Could not load todos');
 
     const todos = (await response.json()) as unknown;
     return Array.isArray(todos) ? todos.filter(isApiTodo) : [];
@@ -38,9 +37,7 @@ export class HttpTodoRepository implements TodoRepository {
       body: JSON.stringify(request),
     });
 
-    if (!response.ok) {
-      throw new Error(`Could not save todos: ${response.status}`);
-    }
+    await ensureOk(response, 'Could not save todos');
   }
 }
 

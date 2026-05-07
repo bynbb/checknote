@@ -1,0 +1,46 @@
+.error-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e3b7b7;
+  background: #fff3f1;
+  color: #672321;
+  padding: 12px 18px;
+}
+
+.error-code,
+.error-message {
+  margin: 0;
+}
+
+.error-code {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.error-message {
+  margin-top: 3px;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #672321;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+@media (max-width: 560px) {
+  .error-banner {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

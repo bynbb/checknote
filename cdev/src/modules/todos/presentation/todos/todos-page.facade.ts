@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { ERROR_REPORTER } from '@cdev/common/composition/errors/error-reporter.token';
 import {
   AddTodoCommand,
   ClearCompletedCommand,
@@ -22,6 +23,7 @@ export class TodosPageFacade {
   private readonly toggleTodoHandler = inject(TOGGLE_TODO_HANDLER);
   private readonly deleteTodoHandler = inject(DELETE_TODO_HANDLER);
   private readonly clearCompletedHandler = inject(CLEAR_COMPLETED_HANDLER);
+  private readonly errors = inject(ERROR_REPORTER);
 
   readonly newTodo = signal('');
   readonly filter = signal<TodoFilter>('all');
@@ -46,28 +48,56 @@ export class TodosPageFacade {
   }
 
   async loadTodos(): Promise<void> {
-    this.todos.set(await this.getTodosHandler.handle(new GetTodosQuery()));
+    try {
+      this.todos.set(await this.getTodosHandler.handle(new GetTodosQuery()));
+    } catch (error) {
+      this.errors.report(error);
+    }
   }
 
   async addTodo(): Promise<void> {
-    await this.addTodoHandler.handle(new AddTodoCommand(this.newTodo()));
-    this.newTodo.set('');
-    await this.loadTodos();
+    this.errors.clear();
+
+    try {
+      await this.addTodoHandler.handle(new AddTodoCommand(this.newTodo()));
+      this.newTodo.set('');
+      await this.loadTodos();
+    } catch (error) {
+      this.errors.report(error);
+    }
   }
 
   async toggleTodo(todoId: number): Promise<void> {
-    await this.toggleTodoHandler.handle(new ToggleTodoCommand(todoId));
-    await this.loadTodos();
+    this.errors.clear();
+
+    try {
+      await this.toggleTodoHandler.handle(new ToggleTodoCommand(todoId));
+      await this.loadTodos();
+    } catch (error) {
+      this.errors.report(error);
+    }
   }
 
   async deleteTodo(todoId: number): Promise<void> {
-    await this.deleteTodoHandler.handle(new DeleteTodoCommand(todoId));
-    await this.loadTodos();
+    this.errors.clear();
+
+    try {
+      await this.deleteTodoHandler.handle(new DeleteTodoCommand(todoId));
+      await this.loadTodos();
+    } catch (error) {
+      this.errors.report(error);
+    }
   }
 
   async clearCompleted(): Promise<void> {
-    await this.clearCompletedHandler.handle(new ClearCompletedCommand());
-    await this.loadTodos();
+    this.errors.clear();
+
+    try {
+      await this.clearCompletedHandler.handle(new ClearCompletedCommand());
+      await this.loadTodos();
+    } catch (error) {
+      this.errors.report(error);
+    }
   }
 
   setFilter(filter: TodoFilter): void {

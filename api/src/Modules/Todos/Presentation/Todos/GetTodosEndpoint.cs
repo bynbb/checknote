@@ -2,6 +2,8 @@ namespace Checknote.Modules.Todos.Presentation.Todos;
 
 using System.Collections.Generic;
 using System.Linq;
+using Checknote.Common.Domain;
+using Checknote.Common.Presentation.Results;
 using Checknote.Modules.Todos.Application.Todos.GetTodos;
 using Checknote.Modules.Todos.Application.Todos.SaveTaskList;
 using Checknote.Modules.Todos.Domain.Todos;
@@ -25,10 +27,20 @@ public static class GetTodosEndpoint
     {
         endpoints.MapPut($"{Route}/task-list", (SaveTaskListRequest request, SaveTaskListCommandHandler handler) =>
         {
-            Todo[] todos = request.Todos
-                .Select(todo => new Todo(todo.Id, todo.Title.Trim(), todo.Completed))
+            Result<Todo>[] todoResults = request.Todos
+                .Select(todo => new TodoRequest(todo.Id, todo.Title.Trim(), todo.Completed))
                 .Where(todo => !string.IsNullOrWhiteSpace(todo.Title))
+                .Select(todo => Todo.Create(todo.Id, todo.Title, todo.Completed))
                 .ToArray();
+
+            ValidationError validationError = ValidationError.FromResults(todoResults);
+
+            if (validationError.Errors.Length > 0)
+            {
+                return ApiResults.Problem(Result.Failure(validationError));
+            }
+
+            Todo[] todos = todoResults.Select(result => result.Value).ToArray();
 
             handler.Handle(new SaveTaskListCommand(todos));
 

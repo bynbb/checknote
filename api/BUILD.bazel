@@ -9,6 +9,7 @@ package_group(
     name = "common_domain_consumers",
     packages = [
         "//api/src/Common/Application",
+        "//api/src/Common/Presentation",
         "//api/src/Modules/Todos/Domain",
         "//api/src/Modules/Users/Domain",
     ],
@@ -19,6 +20,14 @@ package_group(
     packages = [
         "//api/src/Modules/Todos/Application",
         "//api/src/Modules/Users/Application",
+    ],
+)
+
+package_group(
+    name = "common_presentation_consumers",
+    packages = [
+        "//api/src/Modules/Todos/Presentation",
+        "//api/src/Modules/Users/Presentation",
     ],
 )
 

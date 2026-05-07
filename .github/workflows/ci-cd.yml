@@ -222,8 +222,6 @@ jobs:
           WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
           WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
           CHECKNOTE_DATABASE_CONNECTION_STRING: ${{ secrets.CHECKNOTE_DATABASE_CONNECTION_STRING }}
-          CHECKNOTE_SEQ_SERVER_URL: ${{ secrets.CHECKNOTE_SEQ_SERVER_URL }}
-          CHECKNOTE_SEQ_API_KEY: ${{ secrets.CHECKNOTE_SEQ_API_KEY }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -265,6 +263,8 @@ jobs:
           WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
           WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
           CHECKNOTE_DATABASE_CONNECTION_STRING: ${{ secrets.CHECKNOTE_DATABASE_CONNECTION_STRING }}
+          CHECKNOTE_SEQ_SERVER_URL: ${{ secrets.CHECKNOTE_SEQ_SERVER_URL }}
+          CHECKNOTE_SEQ_API_KEY: ${{ secrets.CHECKNOTE_SEQ_API_KEY }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -285,66 +285,142 @@ jobs:
           if (![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_API_KEY)) {
             $seqApiKeyB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_API_KEY))
           }
-          $publishScript = @"
-          `$ErrorActionPreference = 'Stop'
+          $remotePublishScriptPath = "$remoteDeployPath/publish-site.ps1"
+          $publishScript = @'
+          param(
+            [Parameter(Mandatory = $true)]
+            [string] $Site,
+            [Parameter(Mandatory = $true)]
+            [string] $Stage,
+            [Parameter(Mandatory = $true)]
+            [string] $ConnectionStringB64,
+            [string] $SeqServerUrlB64 = '',
+            [string] $SeqApiKeyB64 = ''
+          )
+
+          $ErrorActionPreference = 'Stop'
+
           function Set-WebConfigEnvironmentVariable {
             param(
-              [xml]`$WebConfig,
-              `$EnvironmentVariables,
-              [string]`$Name,
-              [string]`$Value
+              [xml] $WebConfig,
+              $EnvironmentVariables,
+              [string] $Name,
+              [string] $Value
             )
 
-            `$variable = `$EnvironmentVariables.environmentVariable | Where-Object { `$_.name -eq `$Name } | Select-Object -First 1
-            if (`$null -eq `$variable) {
-              `$variable = `$WebConfig.CreateElement('environmentVariable')
-              [void]`$EnvironmentVariables.AppendChild(`$variable)
+            $variable = $EnvironmentVariables.environmentVariable | Where-Object { $_.name -eq $Name } | Select-Object -First 1
+            if ($null -eq $variable) {
+              $variable = $WebConfig.CreateElement('environmentVariable')
+              [void] $EnvironmentVariables.AppendChild($variable)
             }
-            `$variable.SetAttribute('name', `$Name)
-            `$variable.SetAttribute('value', `$Value)
+
+            $variable.SetAttribute('name', $Name)
+            $variable.SetAttribute('value', $Value)
           }
 
-          `$site = '$env:WEB_SERVER_REMOTE_PATH'
-          `$stage = '$remoteDeployPath'
-          `$expanded = Join-Path `$stage 'site'
-          `$backup = Join-Path `$site ('.backups/' + (Get-Date -Format 'yyyyMMddHHmmss'))
-          New-Item -ItemType Directory -Force -Path `$site, `$backup, `$expanded | Out-Null
-          Expand-Archive -Path (Join-Path `$stage 'checknote-site.zip') -DestinationPath `$expanded -Force
-          if (!(Test-Path (Join-Path `$expanded 'web.config'))) {
+          $expanded = Join-Path $Stage 'site'
+          $backup = Join-Path $Site ('.backups/' + (Get-Date -Format 'yyyyMMddHHmmss'))
+          New-Item -ItemType Directory -Force -Path $Site, $backup, $expanded | Out-Null
+          Expand-Archive -Path (Join-Path $Stage 'checknote-site.zip') -DestinationPath $expanded -Force
+          if (!(Test-Path (Join-Path $expanded 'web.config'))) {
             throw 'Expected site artifact web.config was not found.'
           }
-          if (!(Test-Path (Join-Path `$expanded 'wwwroot\index.html'))) {
+          if (!(Test-Path (Join-Path $expanded 'wwwroot\index.html'))) {
             throw 'Expected site artifact wwwroot/index.html was not found.'
           }
-          `$webConfigPath = Join-Path `$expanded 'web.config'
-          [xml]`$webConfig = Get-Content -LiteralPath `$webConfigPath
-          `$aspNetCore = `$webConfig.configuration.'system.webServer'.aspNetCore
-          `$environmentVariables = `$aspNetCore.environmentVariables
-          if (`$null -eq `$environmentVariables) {
-            `$environmentVariables = `$webConfig.CreateElement('environmentVariables')
-            [void]`$aspNetCore.AppendChild(`$environmentVariables)
+
+          $webConfigPath = Join-Path $expanded 'web.config'
+          [xml] $webConfig = Get-Content -LiteralPath $webConfigPath
+          $aspNetCore = $webConfig.configuration.'system.webServer'.aspNetCore
+          $environmentVariables = $aspNetCore.environmentVariables
+          if ($null -eq $environmentVariables) {
+            $environmentVariables = $webConfig.CreateElement('environmentVariables')
+            [void] $aspNetCore.AppendChild($environmentVariables)
           }
-          `$connectionString = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$connectionStringB64'))
-          Set-WebConfigEnvironmentVariable -WebConfig `$webConfig -EnvironmentVariables `$environmentVariables -Name 'CHECKNOTE_DATABASE_CONNECTION_STRING' -Value `$connectionString
-          if (![string]::IsNullOrWhiteSpace('$seqServerUrlB64')) {
-            `$seqServerUrl = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$seqServerUrlB64'))
-            Set-WebConfigEnvironmentVariable -WebConfig `$webConfig -EnvironmentVariables `$environmentVariables -Name 'CHECKNOTE_SEQ_SERVER_URL' -Value `$seqServerUrl
+
+          $connectionString = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($ConnectionStringB64))
+          Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'CHECKNOTE_DATABASE_CONNECTION_STRING' -Value $connectionString
+          if (![string]::IsNullOrWhiteSpace($SeqServerUrlB64)) {
+            $seqServerUrl = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($SeqServerUrlB64))
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'CHECKNOTE_SEQ_SERVER_URL' -Value $seqServerUrl
           }
-          if (![string]::IsNullOrWhiteSpace('$seqApiKeyB64')) {
-            `$seqApiKey = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$seqApiKeyB64'))
-            Set-WebConfigEnvironmentVariable -WebConfig `$webConfig -EnvironmentVariables `$environmentVariables -Name 'CHECKNOTE_SEQ_API_KEY' -Value `$seqApiKey
+          if (![string]::IsNullOrWhiteSpace($SeqApiKeyB64)) {
+            $seqApiKey = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($SeqApiKeyB64))
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'CHECKNOTE_SEQ_API_KEY' -Value $seqApiKey
           }
-          `$webConfig.Save(`$webConfigPath)
-          Set-Content -LiteralPath (Join-Path `$site 'app_offline.htm') -Value 'Deploying Checknote' -NoNewline
+
+          $webConfig.Save($webConfigPath)
+          Set-Content -LiteralPath (Join-Path $Site 'app_offline.htm') -Value 'Deploying Checknote' -NoNewline
           Start-Sleep -Seconds 2
-          Get-ChildItem -LiteralPath `$site -Force | Where-Object {
-            `$_.Name -notin @('.deploy', '.backups', '.htaccess')
+          Get-ChildItem -LiteralPath $Site -Force | Where-Object {
+            $_.Name -notin @('.deploy', '.backups', '.htaccess')
           } | ForEach-Object {
-            Move-Item -LiteralPath `$_.FullName -Destination `$backup -Force
+            Move-Item -LiteralPath $_.FullName -Destination $backup -Force
           }
-          Copy-Item -Path (Join-Path `$expanded '*') -Destination `$site -Recurse -Force
+          Copy-Item -Path (Join-Path $expanded '*') -Destination $Site -Recurse -Force
+          '@
+          Set-Content -LiteralPath publish-site.ps1 -Value $publishScript -Encoding UTF8
+          scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT publish-site.ps1 "${remote}:$remotePublishScriptPath"
+          $publishCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $remotePublishScriptPath + '" -Site "' + $env:WEB_SERVER_REMOTE_PATH + '" -Stage "' + $remoteDeployPath + '" -ConnectionStringB64 "' + $connectionStringB64 + '" -SeqServerUrlB64 "' + $seqServerUrlB64 + '" -SeqApiKeyB64 "' + $seqApiKeyB64 + '"'
+          ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote $publishCommand
+
+      - name: Verify Seq deployment configuration
+        timeout-minutes: 5
+        env:
+          WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
+          WEB_SERVER_USERNAME: ${{ secrets.WEB_SERVER_USERNAME }}
+          WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
+          WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
+          CHECKNOTE_SEQ_SERVER_URL: ${{ secrets.CHECKNOTE_SEQ_SERVER_URL }}
+          CHECKNOTE_SEQ_API_KEY: ${{ secrets.CHECKNOTE_SEQ_API_KEY }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_SERVER_URL)) {
+            Write-Host 'CHECKNOTE_SEQ_SERVER_URL is not configured; skipping Seq deployment configuration verification.'
+            exit 0
+          }
+
+          $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
+          $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
+          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          $seqServerUrlB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_SERVER_URL))
+          $seqApiKeyRequired = ![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_API_KEY)
+          $verifyScript = @"
+          `$ErrorActionPreference = 'Stop'
+          `$webConfigPath = Join-Path '$env:WEB_SERVER_REMOTE_PATH' 'web.config'
+          if (!(Test-Path `$webConfigPath)) {
+            throw 'Expected deployed web.config was not found.'
+          }
+
+          [xml]`$webConfig = Get-Content -LiteralPath `$webConfigPath
+          `$environmentVariables = `$webConfig.configuration.'system.webServer'.aspNetCore.environmentVariables
+          if (`$null -eq `$environmentVariables) {
+            throw 'Deployed web.config is missing aspNetCore environmentVariables.'
+          }
+
+          `$seqServerUrl = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$seqServerUrlB64'))
+          `$seqServerUrlVariable = `$environmentVariables.environmentVariable | Where-Object { `$_.name -eq 'CHECKNOTE_SEQ_SERVER_URL' } | Select-Object -First 1
+          if (`$null -eq `$seqServerUrlVariable) {
+            throw 'CHECKNOTE_SEQ_SERVER_URL is configured in GitHub, but missing from deployed web.config.'
+          }
+          if ([string]::IsNullOrWhiteSpace(`$seqServerUrlVariable.value)) {
+            throw 'CHECKNOTE_SEQ_SERVER_URL is present in deployed web.config, but has no value.'
+          }
+          if (`$seqServerUrlVariable.value -ne `$seqServerUrl) {
+            throw 'CHECKNOTE_SEQ_SERVER_URL in deployed web.config does not match the configured production secret.'
+          }
+
+          if ('$seqApiKeyRequired' -eq 'True') {
+            `$seqApiKeyVariable = `$environmentVariables.environmentVariable | Where-Object { `$_.name -eq 'CHECKNOTE_SEQ_API_KEY' } | Select-Object -First 1
+            if (`$null -eq `$seqApiKeyVariable -or [string]::IsNullOrWhiteSpace(`$seqApiKeyVariable.value)) {
+              throw 'CHECKNOTE_SEQ_API_KEY is configured in GitHub, but missing or empty in deployed web.config.'
+            }
+          }
+
+          Write-Host 'Verified Seq environment variables in deployed web.config.'
           "@
-          $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($publishScript))
+          $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($verifyScript))
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"
 
       - name: Verify hello-world API

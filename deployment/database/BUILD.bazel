@@ -1,8 +1,9 @@
-load("@rules_dotnet//dotnet:defs.bzl", "csharp_binary", "csharp_library", "publish_binary")
+load("@rules_dotnet//dotnet:defs.bzl", "publish_binary")
+load("//tools:csharp_rules.bzl", "checknote_csharp_binary", "checknote_csharp_library")
 
 package(default_visibility = ["//visibility:public"])
 
-csharp_library(
+checknote_csharp_library(
     name = "db_tool_lib",
     srcs = ["ChecknoteDatabaseTool.cs"],
     deps = [
@@ -16,7 +17,7 @@ csharp_library(
     target_frameworks = ["net9.0"],
 )
 
-csharp_binary(
+checknote_csharp_binary(
     name = "checknote_db_tool",
     srcs = ["Program.cs"],
     deps = [":db_tool_lib"],

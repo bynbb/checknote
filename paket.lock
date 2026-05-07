@@ -109,6 +109,7 @@ NUGET
     Microsoft.NETCore.Targets (1.1)
     Microsoft.SqlServer.Server (1.0)
     Microsoft.Win32.SystemEvents (6.0)
+    SonarAnalyzer.CSharp (10.25.0.139117)
     System.ClientModel (1.0)
       System.Memory.Data (>= 1.0.2)
       System.Text.Json (>= 4.7.2)

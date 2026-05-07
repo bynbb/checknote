@@ -5,9 +5,13 @@
   "scripts": {
     "build": "bazelisk build //api:checknote_site_zip //deployment/database:checknote_db_tool_publish",
     "db:apply": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/apply-database.ps1",
+    "test": "npm run test:backend && npm run test:frontend && npm run test:tools",
+    "test:backend": "npm run test:api",
     "test:api": "bazelisk build //api/test/unit:unit_tests && bazelisk build //api/src/App:api_route_smoke_check",
+    "test:frontend": "bazelisk build //cdev/test/unit:unit_tests && bazelisk build //cdev/test/architecture:architecture_tests",
+    "test:tools": "bazelisk build //tools/test:unit_tests",
     "check:architecture": "node tools/check-boundaries.mjs --src-dir cdev/src",
-    "test:architecture": "node tools/check-boundaries.test.mjs",
+    "test:architecture": "npm run test:frontend && npm run test:tools",
     "serve": "cd cdev && ..\\node_modules\\.bin\\ng.cmd serve --host 127.0.0.1 --port 4200",
     "ng": "cd cdev && ..\\node_modules\\.bin\\ng.cmd"
   },

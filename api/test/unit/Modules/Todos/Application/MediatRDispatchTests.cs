@@ -28,7 +28,9 @@ internal static class MediatRDispatchTests
         ServiceCollection services = new();
         services.AddSingleton<ITodoRepository>(todoRepository);
         services.AddSingleton<IUserRepository>(new FakeUserRepository(currentUser));
-        services.AddApplication(typeof(GetTodosQueryHandler).Assembly);
+        services.AddApplication(
+            Checknote.Modules.Todos.Application.AssemblyReference.Assembly,
+            Checknote.Modules.Users.Application.AssemblyReference.Assembly);
 
         using ServiceProvider provider = services.BuildServiceProvider(validateScopes: true);
         ISender sender = provider.GetRequiredService<ISender>();

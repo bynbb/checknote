@@ -10,6 +10,7 @@ package_group(
     packages = [
         "//cdev/src/common/...",
         "//cdev/src/modules/...",
+        "//cdev/test/...",
     ],
 )
 
@@ -42,6 +43,7 @@ package_group(
     packages = [
         "//cdev",
         "//cdev/src/modules/todos/composition",
+        "//cdev/test/unit",
     ],
 )
 
@@ -143,7 +145,7 @@ genrule(
     srcs = [
         ":app_sources",
         ":architecture_check",
-        "//tools:check_boundaries_test",
+        "//tools/test:unit_tests",
     ],
     tools = [
         "//tools:build_angular_bat",

@@ -1,0 +1,5 @@
+alias(
+    name = "architecture_tests",
+    actual = "//cdev:architecture_check",
+    visibility = ["//visibility:public"],
+)

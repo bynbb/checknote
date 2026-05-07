@@ -1,0 +1,23 @@
+genrule(
+    name = "unit_tests",
+    srcs = [
+        "//cdev/src/common/domain:domain",
+        "//cdev/src/modules/todos/presentation:presentation",
+        "common/domain/result.spec.ts",
+        "modules/todos/presentation/todos/delete-todo-confirmation.spec.ts",
+    ],
+    outs = ["cdev-unit-tests.stamp"],
+    cmd = """
+set -euo pipefail
+OUT_DIR="$$(pwd)/$(@D)/cdev-unit-out"
+rm -rf "$$OUT_DIR"
+node node_modules/typescript/bin/tsc --target ES2022 --module commonjs --strict --skipLibCheck --outDir "$$OUT_DIR" cdev/src/common/domain/result.ts cdev/src/common/domain/application-error.ts cdev/test/unit/common/domain/result.spec.ts cdev/src/modules/todos/presentation/todos/delete-todo-confirmation.ts cdev/test/unit/modules/todos/presentation/todos/delete-todo-confirmation.spec.ts
+node "$$OUT_DIR/test/unit/common/domain/result.spec.js"
+node "$$OUT_DIR/test/unit/modules/todos/presentation/todos/delete-todo-confirmation.spec.js"
+touch "$@"
+""",
+    cmd_bat = """
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = Join-Path (Resolve-Path '$(@D)').Path 'cdev-unit-out'; Remove-Item -LiteralPath $$outDir -Recurse -Force -ErrorAction SilentlyContinue; node node_modules\\typescript\\bin\\tsc --target ES2022 --module commonjs --strict --skipLibCheck --outDir $$outDir cdev\\src\\common\\domain\\result.ts cdev\\src\\common\\domain\\application-error.ts cdev\\test\\unit\\common\\domain\\result.spec.ts cdev\\src\\modules\\todos\\presentation\\todos\\delete-todo-confirmation.ts cdev\\test\\unit\\modules\\todos\\presentation\\todos\\delete-todo-confirmation.spec.ts; if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; node (Join-Path $$outDir 'test\\unit\\common\\domain\\result.spec.js'); if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; node (Join-Path $$outDir 'test\\unit\\modules\\todos\\presentation\\todos\\delete-todo-confirmation.spec.js'); if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; Set-Content -Path '$@' -Value 'ok'"
+""",
+    visibility = ["//visibility:public"],
+)

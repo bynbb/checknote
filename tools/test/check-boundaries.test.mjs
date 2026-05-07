@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import url from 'node:url';
 
-const repoRoot = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
+const repoRoot = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..');
 const checkerPath = path.join(repoRoot, 'tools', 'check-boundaries.mjs');
 
 const rules = {

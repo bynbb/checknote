@@ -2,12 +2,6 @@ load("//tools:csharp_rules.bzl", "checknote_csharp_library")
 
 package(default_visibility = ["//visibility:private"])
 
-filegroup(
-    name = "test_sources",
-    srcs = glob(["**/*.cs"]),
-    visibility = ["//api/test/unit:__pkg__"],
-)
-
 checknote_csharp_library(
     name = "domain",
     srcs = glob(["**/*.cs"]),

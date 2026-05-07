@@ -1,0 +1,12 @@
+genrule(
+    name = "unit_tests",
+    srcs = [
+        "//tools:architecture-rules.json",
+        "//tools:check-boundaries.mjs",
+        "check-boundaries.test.mjs",
+    ],
+    outs = ["tools-unit-tests.stamp"],
+    cmd = "node tools/test/check-boundaries.test.mjs && touch $@",
+    cmd_bat = "node tools\\test\\check-boundaries.test.mjs && echo ok > $@",
+    visibility = ["//visibility:public"],
+)

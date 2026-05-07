@@ -6,16 +6,15 @@ package(default_visibility = ["//visibility:private"])
 
 checknote_csharp_binary(
     name = "unit_tests_runner",
-    srcs = glob(["**/*.cs"]) + [
-        "//api/src/App:Logging/SerilogRequestLogPolicy.cs",
-        "//api/src/Common/Application:test_sources",
-        "//api/src/Common/Domain:test_sources",
-        "//api/src/Modules/Todos/Application:test_sources",
-        "//api/src/Modules/Todos/Domain:test_sources",
-        "//api/src/Modules/Users/Application:test_sources",
-        "//api/src/Modules/Users/Domain:test_sources",
-    ],
+    srcs = glob(["**/*.cs"]),
     deps = [
+        "//api/src/App:logging",
+        "//api/src/Common/Application:application",
+        "//api/src/Common/Domain:domain",
+        "//api/src/Modules/Todos/Application:application",
+        "//api/src/Modules/Todos/Domain:domain",
+        "//api/src/Modules/Users/Application:application",
+        "//api/src/Modules/Users/Domain:domain",
         "@paket.main//mediatr",
         "@paket.main//mediatr.contracts",
         "@paket.main//microsoft.extensions.dependencyinjection",

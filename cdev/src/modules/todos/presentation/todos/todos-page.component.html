@@ -36,7 +36,7 @@
               <input type="checkbox" [checked]="todo.completed" (change)="facade.toggleTodo(todo.id)">
               <span>{{ todo.title }}</span>
             </label>
-            <button type="button" class="delete-button" (click)="facade.deleteTodo(todo.id)" aria-label="Delete todo">Delete</button>
+            <button type="button" class="delete-button" (click)="facade.deleteTodo(todo)" aria-label="Delete todo">Delete</button>
           </li>
         }
       </ul>

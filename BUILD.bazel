@@ -20,7 +20,7 @@ alias(
 
 alias(
     name = "architecture_checker_tests",
-    actual = "//tools:check_boundaries_test",
+    actual = "//tools/test:unit_tests",
 )
 
 alias(

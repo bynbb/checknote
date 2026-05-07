@@ -80,8 +80,8 @@ jobs:
       - name: Build with Bazel
         run: npm run build
 
-      - name: Test Checknote API
-        run: npm run test:api
+      - name: Test Checknote
+        run: npm test
 
       - name: Stage build artifact
         shell: pwsh

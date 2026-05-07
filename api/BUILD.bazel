@@ -12,6 +12,7 @@ package_group(
         "//api/src/Common/Presentation",
         "//api/src/Modules/Todos/Domain",
         "//api/src/Modules/Users/Domain",
+        "//api/test/unit",
     ],
 )
 
@@ -23,6 +24,7 @@ package_group(
         "//api/src/Modules/Todos/Presentation",
         "//api/src/Modules/Users/Application",
         "//api/src/Modules/Users/Presentation",
+        "//api/test/unit",
     ],
 )
 
@@ -43,6 +45,7 @@ package_group(
         "//api/src/Modules/Todos/Composition",
         "//api/src/Modules/Todos/Infrastructure",
         "//api/src/Modules/Todos/Presentation",
+        "//api/test/unit",
     ],
 )
 
@@ -53,6 +56,7 @@ package_group(
         "//api/src/Modules/Todos/Composition",
         "//api/src/Modules/Todos/Infrastructure",
         "//api/src/Modules/Todos/Presentation",
+        "//api/test/unit",
     ],
 )
 
@@ -81,6 +85,7 @@ package_group(
         "//api/src/Modules/Users/Composition",
         "//api/src/Modules/Users/Infrastructure",
         "//api/src/Modules/Users/Presentation",
+        "//api/test/unit",
     ],
 )
 
@@ -91,6 +96,7 @@ package_group(
         "//api/src/Modules/Users/Composition",
         "//api/src/Modules/Users/Infrastructure",
         "//api/src/Modules/Users/Presentation",
+        "//api/test/unit",
     ],
 )
 

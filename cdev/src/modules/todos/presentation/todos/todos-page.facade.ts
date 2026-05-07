@@ -15,6 +15,7 @@ import {
   GET_TODOS_HANDLER,
   TOGGLE_TODO_HANDLER,
 } from '@cdev/modules/todos/composition/todos/todos.tokens';
+import { deleteTodoAfterConfirmation } from './delete-todo-confirmation';
 
 @Injectable()
 export class TodosPageFacade {
@@ -78,12 +79,17 @@ export class TodosPageFacade {
     }
   }
 
-  async deleteTodo(todoId: number): Promise<void> {
+  async deleteTodo(todo: Todo): Promise<void> {
     this.errors.clear();
 
     try {
-      await this.deleteTodoHandler.handle(new DeleteTodoCommand(todoId));
-      await this.loadTodos();
+      const deleted = await deleteTodoAfterConfirmation(todo, (todoId) =>
+        this.deleteTodoHandler.handle(new DeleteTodoCommand(todoId)),
+      );
+
+      if (deleted) {
+        await this.loadTodos();
+      }
     } catch (error) {
       this.errors.report(error);
     }

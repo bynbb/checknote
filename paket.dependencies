@@ -1,0 +1,7 @@
+source https://api.nuget.org/v3/index.json
+framework: net9.0
+lowest_matching: true
+strategy: min
+storage: none
+
+nuget Microsoft.EntityFrameworkCore.SqlServer 9.0.15

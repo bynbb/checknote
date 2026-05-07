@@ -4,6 +4,12 @@ using Checknote.Common.Domain;
 
 public sealed class User : Entity<string>
 {
+    private User()
+    {
+        Name = string.Empty;
+        Email = string.Empty;
+    }
+
     public User(string id, string name, string email)
         : base(id)
     {
@@ -11,7 +17,7 @@ public sealed class User : Entity<string>
         Email = email;
     }
 
-    public string Name { get; }
+    public string Name { get; private set; }
 
-    public string Email { get; }
+    public string Email { get; private set; }
 }

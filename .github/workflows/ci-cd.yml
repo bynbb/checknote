@@ -89,11 +89,41 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
           Copy-Item -LiteralPath $artifactPath -Destination artifacts/checknote-site.zip -Force
 
+      - name: Stage database tool artifact
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $target = '//api/src/DbTool:checknote_db_tool_publish'
+          $executionRoot = (& npx bazelisk info execution_root).Trim()
+          $toolExeFile = & npx bazelisk cquery $target --output=files |
+            Where-Object { $_ -match 'bazel-out/.*/checknote_db_tool\.exe$' } |
+            Select-Object -First 1
+
+          if ([string]::IsNullOrWhiteSpace($toolExeFile)) {
+            throw 'Could not locate the published Checknote database tool executable.'
+          }
+
+          $toolOutputPath = Join-Path $executionRoot (Split-Path $toolExeFile -Parent)
+          if (!(Test-Path (Join-Path $toolOutputPath 'checknote_db_tool.exe'))) {
+            throw "Expected published database tool was not found: $toolOutputPath"
+          }
+
+          New-Item -ItemType Directory -Force -Path artifacts/checknote-db-tool | Out-Null
+          Copy-Item -Path (Join-Path $toolOutputPath '*') -Destination artifacts/checknote-db-tool -Recurse -Force
+
       - name: Upload Checknote site artifact
         uses: actions/upload-artifact@v4
         with:
           name: checknote-site
           path: artifacts/checknote-site.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Checknote database tool artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: checknote-db-tool
+          path: artifacts/checknote-db-tool/**
           if-no-files-found: error
           retention-days: 14
 
@@ -114,6 +144,12 @@ jobs:
           name: checknote-site
           path: artifact/site
 
+      - name: Download Checknote database tool artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: checknote-db-tool
+          path: artifact/db-tool
+
       - name: Unpack Checknote site
         shell: pwsh
         run: |
@@ -133,6 +169,14 @@ jobs:
           $apiExe = @(Get-ChildItem -Path deploy -Filter *.exe -File)
           if ($apiExe.Count -eq 0) {
             throw 'Expected the self-contained API publish output to include an executable.'
+          }
+
+      - name: Verify Checknote database tool artifact
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (!(Test-Path artifact/db-tool/checknote_db_tool.exe)) {
+            throw 'Expected database tool artifact checknote_db_tool.exe was not found.'
           }
 
       - name: Configure SSH
@@ -160,12 +204,56 @@ jobs:
           $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
           $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
           $remoteZipPath = "$remoteDeployPath/checknote-site.zip"
+          $remoteDbToolZipPath = "$remoteDeployPath/checknote-db-tool.zip"
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
 
           Compress-Archive -Path deploy/* -DestinationPath checknote-site.zip -Force
+          Compress-Archive -Path artifact/db-tool/* -DestinationPath checknote-db-tool.zip -Force
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -Command `"New-Item -ItemType Directory -Force -Path '$remoteDeployPath' | Out-Null`""
           scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT checknote-site.zip "${remote}:$remoteZipPath"
+          scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT checknote-db-tool.zip "${remote}:$remoteDbToolZipPath"
+
+      - name: Apply database model
+        timeout-minutes: 5
+        env:
+          WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
+          WEB_SERVER_USERNAME: ${{ secrets.WEB_SERVER_USERNAME }}
+          WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
+          WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
+          CHECKNOTE_DATABASE_CONNECTION_STRING: ${{ secrets.CHECKNOTE_DATABASE_CONNECTION_STRING }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:CHECKNOTE_DATABASE_CONNECTION_STRING)) {
+            throw 'CHECKNOTE_DATABASE_CONNECTION_STRING secret must be set.'
+          }
+
+          $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
+          $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
+          $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
+          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          $connectionStringB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_DATABASE_CONNECTION_STRING))
+          $applyScript = @"
+          `$ErrorActionPreference = 'Stop'
+          `$stage = '$remoteDeployPath'
+          `$toolRoot = Join-Path `$stage 'db-tool'
+          New-Item -ItemType Directory -Force -Path `$toolRoot | Out-Null
+          Expand-Archive -Path (Join-Path `$stage 'checknote-db-tool.zip') -DestinationPath `$toolRoot -Force
+          `$toolPath = Join-Path `$toolRoot 'checknote_db_tool.exe'
+          if (!(Test-Path `$toolPath)) {
+            throw 'Expected database tool executable was not found on the server.'
+          }
+          # TODO: Back up the production database immediately before this apply step.
+          `$env:CHECKNOTE_DATABASE_CONNECTION_STRING = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$connectionStringB64'))
+          `$env:CHECKNOTE_DEPLOYMENT_ENVIRONMENT = 'production'
+          & `$toolPath apply
+          if (`$LASTEXITCODE -ne 0) {
+            exit `$LASTEXITCODE
+          }
+          "@
+          $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($applyScript))
+          ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"
 
       - name: Publish staged files
         timeout-minutes: 5

@@ -77,7 +77,10 @@ package_group(
 
 package_group(
     name = "users_infrastructure_consumers",
-    packages = ["//api/src/Modules/Users/Composition"],
+    packages = [
+        "//api/src/DbTool",
+        "//api/src/Modules/Users/Composition",
+    ],
 )
 
 package_group(

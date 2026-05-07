@@ -6,6 +6,7 @@ csharp_library(
     name = "domain",
     srcs = glob(["**/*.cs"]),
     deps = ["//api/src/Common/Domain:domain"],
+    exports = ["//api/src/Common/Domain:domain"],
     out = "Checknote.Modules.Users.Domain",
     target_frameworks = ["net9.0"],
     visibility = ["//api:users_domain_consumers"],

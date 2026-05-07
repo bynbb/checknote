@@ -1,0 +1,30 @@
+load("@rules_dotnet//dotnet:defs.bzl", "csharp_binary", "csharp_library", "publish_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+csharp_library(
+    name = "db_tool_lib",
+    srcs = ["ChecknoteDatabaseTool.cs"],
+    deps = [
+        "//api/src/Modules/Users/Infrastructure:infrastructure",
+        "@paket.main//microsoft.entityframeworkcore",
+        "@paket.main//microsoft.entityframeworkcore.relational",
+        "@paket.main//microsoft.entityframeworkcore.sqlserver",
+    ],
+    out = "Checknote.DbTool",
+    target_frameworks = ["net9.0"],
+)
+
+csharp_binary(
+    name = "checknote_db_tool",
+    srcs = ["Program.cs"],
+    deps = [":db_tool_lib"],
+    target_frameworks = ["net9.0"],
+)
+
+publish_binary(
+    name = "checknote_db_tool_publish",
+    binary = ":checknote_db_tool",
+    self_contained = True,
+    target_framework = "net9.0",
+)

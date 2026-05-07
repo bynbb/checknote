@@ -1,15 +1,41 @@
-.error-banner {
+.error-shell {
   position: sticky;
   top: 0;
   z-index: 20;
+  background: #fff7f5;
+  border-bottom: 1px solid #efc5bf;
+  padding: 8px;
+}
+
+.error-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid #e3b7b7;
-  background: #fff3f1;
+  border-color: #efc5bf;
+  border-radius: 8px;
+  background: #fff7f5;
   color: #672321;
-  padding: 12px 18px;
+  box-shadow: 0 6px 18px rgba(103, 35, 33, 0.08);
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.error-marker {
+  display: grid;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: #8a1f1f;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .error-code,
@@ -27,20 +53,32 @@
   margin-top: 3px;
 }
 
-button {
-  border: 0;
-  border-radius: 6px;
+.dismiss-button {
   background: #672321;
   color: #ffffff;
-  cursor: pointer;
   font-weight: 700;
-  min-height: 40px;
-  padding: 0 14px;
+}
+
+mat-card-actions {
+  padding: 8px 14px 8px 0;
 }
 
 @media (max-width: 560px) {
   .error-banner {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .error-content {
+    align-items: flex-start;
+  }
+
+  mat-card-actions {
+    justify-content: stretch;
+    padding: 0 14px 12px;
+  }
+
+  .dismiss-button {
+    width: 100%;
   }
 }

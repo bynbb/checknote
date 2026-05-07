@@ -1,9 +1,16 @@
 @if (errors.current(); as error) {
-  <section class="error-banner" role="alert" aria-live="assertive">
-    <div>
-      <p class="error-code">{{ error.code }}</p>
-      <p class="error-message">{{ error.message }}</p>
-    </div>
-    <button type="button" (click)="errors.clear()">Dismiss</button>
+  <section class="error-shell" role="alert" aria-live="assertive">
+    <mat-card class="error-banner" appearance="outlined">
+      <mat-card-content class="error-content">
+        <span class="error-marker" aria-hidden="true">!</span>
+        <div>
+          <p class="error-code">{{ error.code }}</p>
+          <p class="error-message">{{ error.message }}</p>
+        </div>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-flat-button type="button" class="dismiss-button" (click)="errors.clear()">Dismiss</button>
+      </mat-card-actions>
+    </mat-card>
   </section>
 }

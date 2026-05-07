@@ -1,11 +1,14 @@
 namespace Checknote.DbTool;
 
-using Checknote.Modules.Users.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using System;
 using System.IO;
+using TodosDbContext = Checknote.Modules.Todos.Infrastructure.Database.TodosDbContext;
+using TodosSchemas = Checknote.Modules.Todos.Infrastructure.Database.Schemas;
+using UsersDbContext = Checknote.Modules.Users.Infrastructure.Database.UsersDbContext;
+using UsersSchemas = Checknote.Modules.Users.Infrastructure.Database.Schemas;
 
 public static class ChecknoteDatabaseTool
 {
@@ -30,23 +33,45 @@ public static class ChecknoteDatabaseTool
 
         string environment = Environment.GetEnvironmentVariable(EnvironmentVariable) ?? "local";
 
-        DbContextOptions<UsersDbContext> options = new DbContextOptionsBuilder<UsersDbContext>()
+        DbContextOptions<UsersDbContext> usersOptions = new DbContextOptionsBuilder<UsersDbContext>()
             .UseSqlServer(
                 connectionString,
                 sqlServerOptions => sqlServerOptions.MigrationsHistoryTable(
                     HistoryRepository.DefaultTableName,
-                    Schemas.Users))
+                    UsersSchemas.Users))
             .Options;
 
-        using UsersDbContext usersDbContext = new(options);
-        object usersMigratorService = usersDbContext.GetInfrastructure().GetService(typeof(IMigrator))
-            ?? throw new InvalidOperationException("The Users migrator service was not available.");
-        IMigrator usersMigrator = (IMigrator)usersMigratorService;
-
         output.WriteLine($"Applying Users database model to {environment}.");
-        usersMigrator.Migrate();
+        using (UsersDbContext usersDbContext = new(usersOptions))
+        {
+            Migrate(usersDbContext, "Users");
+        }
         output.WriteLine("Users database model applied.");
 
+        DbContextOptions<TodosDbContext> todosOptions = new DbContextOptionsBuilder<TodosDbContext>()
+            .UseSqlServer(
+                connectionString,
+                sqlServerOptions => sqlServerOptions.MigrationsHistoryTable(
+                    HistoryRepository.DefaultTableName,
+                    TodosSchemas.Todos))
+            .Options;
+
+        output.WriteLine($"Applying Todos database model to {environment}.");
+        using (TodosDbContext todosDbContext = new(todosOptions))
+        {
+            Migrate(todosDbContext, "Todos");
+        }
+        output.WriteLine("Todos database model applied.");
+
         return 0;
+    }
+
+    private static void Migrate(DbContext dbContext, string moduleName)
+    {
+        object migratorService = dbContext.GetInfrastructure().GetService(typeof(IMigrator))
+            ?? throw new InvalidOperationException($"The {moduleName} migrator service was not available.");
+        IMigrator migrator = (IMigrator)migratorService;
+
+        migrator.Migrate();
     }
 }

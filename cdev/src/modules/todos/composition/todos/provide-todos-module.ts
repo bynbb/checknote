@@ -1,5 +1,4 @@
 import { makeEnvironmentProviders } from '@angular/core';
-import { MockEndpointLogger } from '@cdev/common/infrastructure';
 import {
   AddTodoCommandHandler,
   ClearCompletedCommandHandler,
@@ -11,8 +10,7 @@ import {
 } from '@cdev/modules/todos/application';
 import {
   DateNowTodoIdGenerator,
-  LocalStorageTodoRepository,
-  MockTodosEndpoint,
+  HttpTodoRepository,
 } from '@cdev/modules/todos/infrastructure';
 import { TodosPageFacade } from '@cdev/modules/todos/presentation';
 import {
@@ -27,19 +25,10 @@ import {
 
 export function provideTodosModule() {
   return makeEnvironmentProviders([
-    {
-      provide: MockTodosEndpoint,
-      useFactory: (logger: MockEndpointLogger) => new MockTodosEndpoint(logger),
-      deps: [MockEndpointLogger],
-    },
-    {
-      provide: LocalStorageTodoRepository,
-      useFactory: (endpoint: MockTodosEndpoint) => new LocalStorageTodoRepository(endpoint),
-      deps: [MockTodosEndpoint],
-    },
+    { provide: HttpTodoRepository, useFactory: () => new HttpTodoRepository() },
     { provide: DateNowTodoIdGenerator, useFactory: () => new DateNowTodoIdGenerator() },
     TodosPageFacade,
-    { provide: TODO_REPOSITORY, useExisting: LocalStorageTodoRepository },
+    { provide: TODO_REPOSITORY, useExisting: HttpTodoRepository },
     { provide: TODO_ID_GENERATOR, useExisting: DateNowTodoIdGenerator },
     {
       provide: GET_TODOS_HANDLER,

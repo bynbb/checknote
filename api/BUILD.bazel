@@ -43,7 +43,10 @@ package_group(
 
 package_group(
     name = "todos_infrastructure_consumers",
-    packages = ["//api/src/Modules/Todos/Composition"],
+    packages = [
+        "//api/src/DbTool",
+        "//api/src/Modules/Todos/Composition",
+    ],
 )
 
 package_group(

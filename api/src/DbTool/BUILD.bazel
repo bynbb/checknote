@@ -6,6 +6,7 @@ csharp_library(
     name = "db_tool_lib",
     srcs = ["ChecknoteDatabaseTool.cs"],
     deps = [
+        "//api/src/Modules/Todos/Infrastructure:infrastructure",
         "//api/src/Modules/Users/Infrastructure:infrastructure",
         "@paket.main//microsoft.entityframeworkcore",
         "@paket.main//microsoft.entityframeworkcore.relational",

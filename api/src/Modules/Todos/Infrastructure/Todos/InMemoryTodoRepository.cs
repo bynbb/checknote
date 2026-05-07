@@ -1,18 +1,31 @@
 namespace Checknote.Modules.Todos.Infrastructure.Todos;
 
 using System.Collections.Generic;
+using System.Linq;
 using Checknote.Modules.Todos.Application.Abstractions;
 using Checknote.Modules.Todos.Domain.Todos;
 
 public sealed class InMemoryTodoRepository : ITodoRepository
 {
-    private static readonly Todo[] SeedTodos =
+    private static readonly object Sync = new();
+    private static List<Todo> todos =
     [
-        new Todo("todo-1", "Seed the Checknote API module", false),
+        new Todo(1L, "Build the app with Bazel", false),
     ];
 
     public IReadOnlyCollection<Todo> GetTodos()
     {
-        return SeedTodos;
+        lock (Sync)
+        {
+            return todos.ToArray();
+        }
+    }
+
+    public void SaveTodos(IReadOnlyCollection<Todo> newTodos)
+    {
+        lock (Sync)
+        {
+            todos = newTodos.ToList();
+        }
     }
 }

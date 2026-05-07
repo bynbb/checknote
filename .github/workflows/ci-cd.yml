@@ -11,11 +11,11 @@ on:
 jobs:
   repository-guards:
     name: Repository guards
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -50,21 +50,21 @@ jobs:
 
   build:
     name: Build
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     needs: repository-guards
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
 
@@ -112,7 +112,7 @@ jobs:
           Copy-Item -Path (Join-Path $toolOutputPath '*') -Destination artifacts/checknote-db-tool -Recurse -Force
 
       - name: Upload Checknote site artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: checknote-site
           path: artifacts/checknote-site.zip
@@ -120,7 +120,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Checknote database tool artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: checknote-db-tool
           path: artifacts/checknote-db-tool/**
@@ -129,7 +129,7 @@ jobs:
 
   deploy:
     name: Deploy to web server
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: production
@@ -139,13 +139,13 @@ jobs:
 
     steps:
       - name: Download Checknote site artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: checknote-site
           path: artifact/site
 
       - name: Download Checknote database tool artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: checknote-db-tool
           path: artifact/db-tool
@@ -262,13 +262,19 @@ jobs:
           WEB_SERVER_USERNAME: ${{ secrets.WEB_SERVER_USERNAME }}
           WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
           WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
+          CHECKNOTE_DATABASE_CONNECTION_STRING: ${{ secrets.CHECKNOTE_DATABASE_CONNECTION_STRING }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:CHECKNOTE_DATABASE_CONNECTION_STRING)) {
+            throw 'CHECKNOTE_DATABASE_CONNECTION_STRING secret must be set.'
+          }
+
           $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
           $remoteDeployPath = "$env:WEB_SERVER_REMOTE_PATH/.deploy/$env:GITHUB_SHA"
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          $connectionStringB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_DATABASE_CONNECTION_STRING))
           $publishScript = @"
           `$ErrorActionPreference = 'Stop'
           `$site = '$env:WEB_SERVER_REMOTE_PATH'
@@ -283,6 +289,23 @@ jobs:
           if (!(Test-Path (Join-Path `$expanded 'wwwroot\index.html'))) {
             throw 'Expected site artifact wwwroot/index.html was not found.'
           }
+          `$webConfigPath = Join-Path `$expanded 'web.config'
+          [xml]`$webConfig = Get-Content -LiteralPath `$webConfigPath
+          `$aspNetCore = `$webConfig.configuration.'system.webServer'.aspNetCore
+          `$environmentVariables = `$aspNetCore.environmentVariables
+          if (`$null -eq `$environmentVariables) {
+            `$environmentVariables = `$webConfig.CreateElement('environmentVariables')
+            [void]`$aspNetCore.AppendChild(`$environmentVariables)
+          }
+          `$connectionString = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$connectionStringB64'))
+          `$databaseVariable = `$environmentVariables.environmentVariable | Where-Object { `$_.name -eq 'CHECKNOTE_DATABASE_CONNECTION_STRING' } | Select-Object -First 1
+          if (`$null -eq `$databaseVariable) {
+            `$databaseVariable = `$webConfig.CreateElement('environmentVariable')
+            [void]`$environmentVariables.AppendChild(`$databaseVariable)
+          }
+          `$databaseVariable.SetAttribute('name', 'CHECKNOTE_DATABASE_CONNECTION_STRING')
+          `$databaseVariable.SetAttribute('value', `$connectionString)
+          `$webConfig.Save(`$webConfigPath)
           Set-Content -LiteralPath (Join-Path `$site 'app_offline.htm') -Value 'Deploying Checknote' -NoNewline
           Start-Sleep -Seconds 2
           Get-ChildItem -LiteralPath `$site -Force | Where-Object {
@@ -317,6 +340,28 @@ jobs:
             Start-Sleep -Seconds 5
           }
           throw "Expected $url to return '$expected'."
+
+      - name: Verify Todos API
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = 'https://www.checknote.io/api/todos'
+          for ($attempt = 1; $attempt -le 6; $attempt++) {
+            try {
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20
+              $todos = $response.Content | ConvertFrom-Json -NoEnumerate
+              if ($response.StatusCode -eq 200 -and $todos -is [array]) {
+                Write-Host "Verified $url"
+                exit 0
+              }
+              Write-Host "Attempt $attempt returned status $($response.StatusCode) and body '$($response.Content)'"
+            }
+            catch {
+              Write-Host "Attempt $attempt failed: $($_.Exception.Message)"
+            }
+            Start-Sleep -Seconds 5
+          }
+          throw "Expected $url to return a JSON task list."
 
       - name: Verify Angular app
         shell: pwsh

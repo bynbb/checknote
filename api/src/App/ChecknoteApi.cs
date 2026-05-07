@@ -1,5 +1,6 @@
 namespace Checknote.Api;
 
+using Checknote.Api.Logging;
 using Checknote.Api.Middleware;
 using Checknote.Modules.Todos.Composition.Todos;
 using Checknote.Modules.Users.Composition.Users;
@@ -8,6 +9,8 @@ using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Serilog.Events;
 
 public static class ChecknoteApi
 {
@@ -23,6 +26,7 @@ public static class ChecknoteApi
 
     public static WebApplication Build(WebApplicationBuilder builder)
     {
+        ConfigureSerilog(builder);
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
         builder.Services.AddTodosModule();
@@ -31,12 +35,51 @@ public static class ChecknoteApi
         WebApplication app = builder.Build();
 
         app.UseExceptionHandler();
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.MessageTemplate = SerilogRequestLogPolicy.MessageTemplate;
+            options.GetLevel = (httpContext, elapsed, exception) =>
+                ToSerilogLevel(SerilogRequestLogPolicy.GetLevel(httpContext, elapsed, exception));
+            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+            {
+                diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value ?? string.Empty);
+                diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme ?? string.Empty);
+                diagnosticContext.Set("ChecknoteArea", SerilogRequestLogPolicy.GetArea(httpContext.Request.Path));
+            };
+        });
         MapApiRoutes(app);
         app.MapTodosModule();
         app.MapUsersModule();
         MapStaticSite(app);
 
         return app;
+    }
+
+    private static LogEventLevel ToSerilogLevel(ChecknoteRequestLogLevel level) =>
+        level switch
+        {
+            ChecknoteRequestLogLevel.Error => LogEventLevel.Error,
+            ChecknoteRequestLogLevel.Warning => LogEventLevel.Warning,
+            _ => LogEventLevel.Information,
+        };
+
+    private static void ConfigureSerilog(WebApplicationBuilder builder)
+    {
+        builder.Host.UseSerilog((context, loggerConfiguration) =>
+        {
+            loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+
+            string? seqServerUrl = Environment.GetEnvironmentVariable(
+                SerilogRequestLogPolicy.SeqServerUrlVariable);
+
+            if (!string.IsNullOrWhiteSpace(seqServerUrl))
+            {
+                loggerConfiguration.WriteTo.Seq(
+                    seqServerUrl,
+                    apiKey: Environment.GetEnvironmentVariable(
+                        SerilogRequestLogPolicy.SeqApiKeyVariable));
+            }
+        });
     }
 
     private static void MapApiRoutes(WebApplication app)

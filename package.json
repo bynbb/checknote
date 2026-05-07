@@ -5,7 +5,7 @@
   "scripts": {
     "build": "bazelisk build //api:checknote_site_zip //deployment/database:checknote_db_tool_publish",
     "db:apply": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/apply-database.ps1",
-    "test:api": "bazelisk build //api/src/App:api_route_smoke_check",
+    "test:api": "bazelisk test //api/src/App:serilog_request_log_policy_test && bazelisk build //api/src/App:api_route_smoke_check",
     "check:architecture": "node tools/check-boundaries.mjs --src-dir cdev/src",
     "test:architecture": "node tools/check-boundaries.test.mjs",
     "serve": "cd cdev && ..\\node_modules\\.bin\\ng.cmd serve --host 127.0.0.1 --port 4200",

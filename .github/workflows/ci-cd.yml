@@ -222,6 +222,8 @@ jobs:
           WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
           WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
           CHECKNOTE_DATABASE_CONNECTION_STRING: ${{ secrets.CHECKNOTE_DATABASE_CONNECTION_STRING }}
+          CHECKNOTE_SEQ_SERVER_URL: ${{ secrets.CHECKNOTE_SEQ_SERVER_URL }}
+          CHECKNOTE_SEQ_API_KEY: ${{ secrets.CHECKNOTE_SEQ_API_KEY }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -275,8 +277,33 @@ jobs:
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
           $connectionStringB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_DATABASE_CONNECTION_STRING))
+          $seqServerUrlB64 = ''
+          if (![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_SERVER_URL)) {
+            $seqServerUrlB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_SERVER_URL))
+          }
+          $seqApiKeyB64 = ''
+          if (![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_API_KEY)) {
+            $seqApiKeyB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_API_KEY))
+          }
           $publishScript = @"
           `$ErrorActionPreference = 'Stop'
+          function Set-WebConfigEnvironmentVariable {
+            param(
+              [xml]`$WebConfig,
+              `$EnvironmentVariables,
+              [string]`$Name,
+              [string]`$Value
+            )
+
+            `$variable = `$EnvironmentVariables.environmentVariable | Where-Object { `$_.name -eq `$Name } | Select-Object -First 1
+            if (`$null -eq `$variable) {
+              `$variable = `$WebConfig.CreateElement('environmentVariable')
+              [void]`$EnvironmentVariables.AppendChild(`$variable)
+            }
+            `$variable.SetAttribute('name', `$Name)
+            `$variable.SetAttribute('value', `$Value)
+          }
+
           `$site = '$env:WEB_SERVER_REMOTE_PATH'
           `$stage = '$remoteDeployPath'
           `$expanded = Join-Path `$stage 'site'
@@ -298,13 +325,15 @@ jobs:
             [void]`$aspNetCore.AppendChild(`$environmentVariables)
           }
           `$connectionString = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$connectionStringB64'))
-          `$databaseVariable = `$environmentVariables.environmentVariable | Where-Object { `$_.name -eq 'CHECKNOTE_DATABASE_CONNECTION_STRING' } | Select-Object -First 1
-          if (`$null -eq `$databaseVariable) {
-            `$databaseVariable = `$webConfig.CreateElement('environmentVariable')
-            [void]`$environmentVariables.AppendChild(`$databaseVariable)
+          Set-WebConfigEnvironmentVariable -WebConfig `$webConfig -EnvironmentVariables `$environmentVariables -Name 'CHECKNOTE_DATABASE_CONNECTION_STRING' -Value `$connectionString
+          if (![string]::IsNullOrWhiteSpace('$seqServerUrlB64')) {
+            `$seqServerUrl = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$seqServerUrlB64'))
+            Set-WebConfigEnvironmentVariable -WebConfig `$webConfig -EnvironmentVariables `$environmentVariables -Name 'CHECKNOTE_SEQ_SERVER_URL' -Value `$seqServerUrl
           }
-          `$databaseVariable.SetAttribute('name', 'CHECKNOTE_DATABASE_CONNECTION_STRING')
-          `$databaseVariable.SetAttribute('value', `$connectionString)
+          if (![string]::IsNullOrWhiteSpace('$seqApiKeyB64')) {
+            `$seqApiKey = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$seqApiKeyB64'))
+            Set-WebConfigEnvironmentVariable -WebConfig `$webConfig -EnvironmentVariables `$environmentVariables -Name 'CHECKNOTE_SEQ_API_KEY' -Value `$seqApiKey
+          }
           `$webConfig.Save(`$webConfigPath)
           Set-Content -LiteralPath (Join-Path `$site 'app_offline.htm') -Value 'Deploying Checknote' -NoNewline
           Start-Sleep -Seconds 2

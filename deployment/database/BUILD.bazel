@@ -12,7 +12,7 @@ csharp_library(
         "@paket.main//microsoft.entityframeworkcore.relational",
         "@paket.main//microsoft.entityframeworkcore.sqlserver",
     ],
-    out = "Checknote.DbTool",
+    out = "Checknote.Deployment.Database",
     target_frameworks = ["net9.0"],
 )
 

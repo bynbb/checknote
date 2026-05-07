@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bazelisk build //api:checknote_site_zip //api/src/DbTool:checknote_db_tool_publish",
+    "build": "bazelisk build //api:checknote_site_zip //deployment/database:checknote_db_tool_publish",
     "db:apply": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/apply-database.ps1",
     "test:api": "bazelisk build //api/src/App:api_route_smoke_check",
     "check:architecture": "node tools/check-boundaries.mjs --src-dir cdev/src",

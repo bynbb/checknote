@@ -93,7 +93,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $target = '//api/src/DbTool:checknote_db_tool_publish'
+          $target = '//deployment/database:checknote_db_tool_publish'
           $executionRoot = (& npx bazelisk info execution_root).Trim()
           $toolExeFile = & npx bazelisk cquery $target --output=files |
             Where-Object { $_ -match 'bazel-out/.*/checknote_db_tool\.exe$' } |

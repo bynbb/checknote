@@ -1,4 +1,4 @@
-namespace Checknote.DbTool;
+namespace Checknote.Deployment.Database;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;

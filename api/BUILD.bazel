@@ -44,8 +44,8 @@ package_group(
 package_group(
     name = "todos_infrastructure_consumers",
     packages = [
-        "//api/src/DbTool",
         "//api/src/Modules/Todos/Composition",
+        "//deployment/database",
     ],
 )
 
@@ -81,8 +81,8 @@ package_group(
 package_group(
     name = "users_infrastructure_consumers",
     packages = [
-        "//api/src/DbTool",
         "//api/src/Modules/Users/Composition",
+        "//deployment/database",
     ],
 )
 

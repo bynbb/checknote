@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
 $bazel = Join-Path $PSScriptRoot '..\node_modules\.bin\bazelisk.cmd'
-$target = '//api/src/DbTool:checknote_db_tool_publish'
+$target = '//deployment/database:checknote_db_tool_publish'
 
 & $bazel build $target
 if ($LASTEXITCODE -ne 0) {

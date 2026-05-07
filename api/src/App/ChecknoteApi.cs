@@ -3,6 +3,7 @@ namespace Checknote.Api;
 using Checknote.Api.Middleware;
 using Checknote.Modules.Todos.Composition.Todos;
 using Checknote.Modules.Users.Composition.Users;
+using System;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -65,7 +66,11 @@ public static class ChecknoteApi
     private static void MapStaticSite(WebApplication app)
     {
         app.UseDefaultFiles();
-        app.UseStaticFiles();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = context =>
+                ApplyStaticFileCachePolicy(context.Context.Response, context.File.Name),
+        });
 
         app.Use(async (context, next) =>
         {
@@ -88,7 +93,55 @@ public static class ChecknoteApi
 
             context.Response.StatusCode = StatusCodes.Status200OK;
             context.Response.ContentType = "text/html";
+            ApplyStaticFileCachePolicy(context.Response, "index.html");
             await context.Response.SendFileAsync(indexPath);
         });
+    }
+
+    private static void ApplyStaticFileCachePolicy(HttpResponse response, string fileName)
+    {
+        if (string.Equals(fileName, "index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            response.Headers["Pragma"] = "no-cache";
+            response.Headers["Expires"] = "0";
+            return;
+        }
+
+        if (IsAngularFingerprintAsset(fileName))
+        {
+            response.Headers["Cache-Control"] = "public, max-age=31536000, immutable";
+        }
+    }
+
+    private static bool IsAngularFingerprintAsset(string fileName)
+    {
+        string extension = Path.GetExtension(fileName);
+
+        if (!string.Equals(extension, ".js", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(extension, ".css", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        string name = Path.GetFileNameWithoutExtension(fileName);
+        int hashSeparatorIndex = name.LastIndexOf('-');
+
+        return hashSeparatorIndex >= 0 &&
+            hashSeparatorIndex < name.Length - 1 &&
+            IsAlphaNumeric(name[(hashSeparatorIndex + 1)..]);
+    }
+
+    private static bool IsAlphaNumeric(string value)
+    {
+        foreach (char character in value)
+        {
+            if (!char.IsLetterOrDigit(character))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -1,11 +1,18 @@
 exports_files([
     "architecture-rules.json",
+    "api-route-smoke.ps1",
     "build-angular.bat",
     "build-angular.mjs",
     "cdev_architecture.bzl",
     "check-boundaries.test.mjs",
     "check-boundaries.mjs",
 ])
+
+filegroup(
+    name = "api_route_smoke_ps1",
+    srcs = ["api-route-smoke.ps1"],
+    visibility = ["//visibility:public"],
+)
 
 filegroup(
     name = "build_angular_bat",

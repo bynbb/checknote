@@ -2,6 +2,7 @@ namespace Checknote.Api;
 
 using Checknote.Api.Logging;
 using Checknote.Api.Middleware;
+using Checknote.Common.Application;
 using Checknote.Modules.Todos.Composition.Todos;
 using Checknote.Modules.Users.Composition.Users;
 using System;
@@ -9,13 +10,17 @@ using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using TodosApplication = Checknote.Modules.Todos.Application.AssemblyReference;
+using UsersApplication = Checknote.Modules.Users.Application.AssemblyReference;
 
 public static class ChecknoteApi
 {
     public const string HelloWorldRoute = "/hello-world";
     public const string HelloWorldResponse = "Hello from Checknote API";
+    private const string MediatRLicenseLogCategory = "LuckyPennySoftware.MediatR.License";
 
     public static WebApplication Create(string[] args)
     {
@@ -27,8 +32,12 @@ public static class ChecknoteApi
     public static WebApplication Build(WebApplicationBuilder builder)
     {
         ConfigureSerilog(builder);
+        builder.Logging.AddFilter(MediatRLicenseLogCategory, LogLevel.None);
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
+        builder.Services.AddApplication(
+            TodosApplication.Assembly,
+            UsersApplication.Assembly);
         builder.Services.AddTodosModule();
         builder.Services.AddUsersModule();
 

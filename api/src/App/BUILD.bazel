@@ -5,14 +5,31 @@ load("//tools:csharp_rules.bzl", "checknote_csharp_binary", "checknote_csharp_li
 package(default_visibility = ["//visibility:public"])
 
 checknote_csharp_library(
+    name = "logging",
+    srcs = ["Logging/SerilogRequestLogPolicy.cs"],
+    deps = [],
+    out = "Checknote.Api.Logging",
+    project_sdk = "web",
+    target_frameworks = ["net9.0"],
+    visibility = ["//api/test/unit:__pkg__"],
+)
+
+checknote_csharp_library(
     name = "api_lib",
     srcs = glob(["**/*.cs"], exclude = [
+        "Logging/SerilogRequestLogPolicy.cs",
         "Program.cs",
         "**/*Tests.cs",
     ]),
     deps = [
+        ":logging",
+        "//api/src/Common/Application:application",
+        "//api/src/Modules/Todos/Application:application",
         "//api/src/Modules/Todos/Composition:composition",
+        "//api/src/Modules/Users/Application:application",
         "//api/src/Modules/Users/Composition:composition",
+        "@paket.main//microsoft.extensions.dependencyinjection.abstractions",
+        "@paket.main//microsoft.extensions.logging.abstractions",
         "@paket.main//serilog",
         "@paket.main//serilog.aspnetcore",
         "@paket.main//serilog.extensions.hosting",
@@ -21,18 +38,6 @@ checknote_csharp_library(
         "@paket.main//serilog.sinks.seq",
     ],
     out = "Checknote.Api",
-    project_sdk = "web",
-    target_frameworks = ["net9.0"],
-)
-
-checknote_csharp_test(
-    name = "serilog_request_log_policy_test",
-    srcs = [
-        "Logging/SerilogRequestLogPolicy.cs",
-        "Logging/SerilogRequestLogPolicyTests.cs",
-    ],
-    deps = [],
-    out = "Checknote.Api.SerilogRequestLogPolicyTests",
     project_sdk = "web",
     target_frameworks = ["net9.0"],
 )

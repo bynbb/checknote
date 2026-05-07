@@ -1,6 +1,9 @@
 namespace Checknote.Modules.Users.Application.Users.GetCurrentUser;
 
+using System.Threading;
+using System.Threading.Tasks;
 using Checknote.Common.Application.Messaging;
+using Checknote.Common.Domain;
 using Checknote.Modules.Users.Application.Abstractions;
 using Checknote.Modules.Users.Domain.Users;
 
@@ -13,8 +16,8 @@ public sealed class GetCurrentUserQueryHandler : IQueryHandler<GetCurrentUserQue
         this.userRepository = userRepository;
     }
 
-    public User Handle(GetCurrentUserQuery query)
+    public Task<Result<User>> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
     {
-        return userRepository.GetCurrentUser();
+        return Task.FromResult(Result.Success(userRepository.GetCurrentUser()));
     }
 }

@@ -1,0 +1,53 @@
+load("@rules_dotnet//dotnet:defs.bzl", "publish_binary")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
+load("//tools:csharp_rules.bzl", "checknote_csharp_binary")
+
+package(default_visibility = ["//visibility:private"])
+
+checknote_csharp_binary(
+    name = "unit_tests_runner",
+    srcs = glob(["**/*.cs"]) + [
+        "//api/src/App:Logging/SerilogRequestLogPolicy.cs",
+        "//api/src/Common/Application:test_sources",
+        "//api/src/Common/Domain:test_sources",
+        "//api/src/Modules/Todos/Application:test_sources",
+        "//api/src/Modules/Todos/Domain:test_sources",
+        "//api/src/Modules/Users/Application:test_sources",
+        "//api/src/Modules/Users/Domain:test_sources",
+    ],
+    deps = [
+        "@paket.main//mediatr",
+        "@paket.main//mediatr.contracts",
+        "@paket.main//microsoft.extensions.dependencyinjection",
+        "@paket.main//microsoft.extensions.dependencyinjection.abstractions",
+        "@paket.main//microsoft.extensions.logging",
+        "@paket.main//microsoft.extensions.logging.abstractions",
+    ],
+    out = "Checknote.Api.UnitTests",
+    project_sdk = "web",
+    target_frameworks = ["net9.0"],
+    visibility = ["//visibility:public"],
+)
+
+publish_binary(
+    name = "unit_tests_publish",
+    binary = ":unit_tests_runner",
+    self_contained = True,
+    target_framework = "net9.0",
+)
+
+pkg_zip(
+    name = "unit_tests_zip",
+    srcs = [":unit_tests_publish"],
+    out = "unit-tests.zip",
+)
+
+genrule(
+    name = "unit_tests",
+    srcs = [":unit_tests_zip"],
+    outs = ["unit-tests.stamp"],
+    cmd_bat = """
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = (Resolve-Path '$(@D)').Path; $$runDir = Join-Path $$outDir 'unit-tests-run'; Remove-Item -LiteralPath $$runDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force -Path $$runDir | Out-Null; Expand-Archive -Path '$(location :unit_tests_zip)' -DestinationPath $$runDir -Force; $$exe = Join-Path $$runDir 'Checknote.Api.UnitTests.exe'; if (!(Test-Path $$exe)) { throw 'Expected unit test runner was not found.' }; & $$exe; if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; Set-Content -Path '$@' -Value 'ok'"
+""",
+    visibility = ["//visibility:public"],
+)

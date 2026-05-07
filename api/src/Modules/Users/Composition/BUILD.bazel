@@ -6,6 +6,7 @@ checknote_csharp_library(
     name = "composition",
     srcs = glob(["**/*.cs"]),
     deps = [
+        "//api/src/Common/Presentation:presentation",
         "//api/src/Modules/Users/Application:application",
         "//api/src/Modules/Users/Infrastructure:infrastructure",
         "//api/src/Modules/Users/Presentation:presentation",

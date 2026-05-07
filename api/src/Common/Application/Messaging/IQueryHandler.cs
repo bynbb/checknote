@@ -1,6 +1,9 @@
 namespace Checknote.Common.Application.Messaging;
 
-public interface IQueryHandler<in TQuery, out TResponse>
+using Checknote.Common.Domain;
+using MediatR;
+
+public interface IQueryHandler<in TQuery, TResponse> : IRequestHandler<TQuery, Result<TResponse>>
+    where TQuery : IQuery<TResponse>
 {
-    TResponse Handle(TQuery query);
 }

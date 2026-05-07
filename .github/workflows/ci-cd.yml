@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   repository-guards:
     name: Repository guards
@@ -18,6 +21,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Verify repository safety rules
         shell: pwsh
@@ -56,6 +60,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -207,6 +213,10 @@ jobs:
           $remoteDbToolZipPath = "$remoteDeployPath/checknote-db-tool.zip"
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          Write-Host "::add-mask::$remoteDeployPath"
+          Write-Host "::add-mask::$remoteZipPath"
+          Write-Host "::add-mask::$remoteDbToolZipPath"
+          Write-Host "::add-mask::$remote"
 
           Compress-Archive -Path deploy/* -DestinationPath checknote-site.zip -Force
           Compress-Archive -Path artifact/db-tool/* -DestinationPath checknote-db-tool.zip -Force
@@ -234,6 +244,9 @@ jobs:
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
           $connectionStringB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_DATABASE_CONNECTION_STRING))
+          Write-Host "::add-mask::$remoteDeployPath"
+          Write-Host "::add-mask::$remote"
+          Write-Host "::add-mask::$connectionStringB64"
           $applyScript = @"
           `$ErrorActionPreference = 'Stop'
           `$stage = '$remoteDeployPath'
@@ -253,6 +266,7 @@ jobs:
           }
           "@
           $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($applyScript))
+          Write-Host "::add-mask::$encodedScript"
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"
 
       - name: Publish staged files
@@ -277,15 +291,21 @@ jobs:
           $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
           $connectionStringB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_DATABASE_CONNECTION_STRING))
+          Write-Host "::add-mask::$remoteDeployPath"
+          Write-Host "::add-mask::$remote"
+          Write-Host "::add-mask::$connectionStringB64"
           $seqServerUrlB64 = ''
           if (![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_SERVER_URL)) {
             $seqServerUrlB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_SERVER_URL))
+            Write-Host "::add-mask::$seqServerUrlB64"
           }
           $seqApiKeyB64 = ''
           if (![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_API_KEY)) {
             $seqApiKeyB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_API_KEY))
+            Write-Host "::add-mask::$seqApiKeyB64"
           }
           $remotePublishScriptPath = "$remoteDeployPath/publish-site.ps1"
+          Write-Host "::add-mask::$remotePublishScriptPath"
           $publishScript = @'
           param(
             [Parameter(Mandatory = $true)]
@@ -362,6 +382,7 @@ jobs:
           Set-Content -LiteralPath publish-site.ps1 -Value $publishScript -Encoding UTF8
           scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT publish-site.ps1 "${remote}:$remotePublishScriptPath"
           $publishCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $remotePublishScriptPath + '" -Site "' + $env:WEB_SERVER_REMOTE_PATH + '" -Stage "' + $remoteDeployPath + '" -ConnectionStringB64 "' + $connectionStringB64 + '" -SeqServerUrlB64 "' + $seqServerUrlB64 + '" -SeqApiKeyB64 "' + $seqApiKeyB64 + '"'
+          Write-Host "::add-mask::$publishCommand"
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote $publishCommand
 
       - name: Verify Seq deployment configuration
@@ -386,6 +407,8 @@ jobs:
           $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
           $seqServerUrlB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_SERVER_URL))
           $seqApiKeyRequired = ![string]::IsNullOrWhiteSpace($env:CHECKNOTE_SEQ_API_KEY)
+          Write-Host "::add-mask::$remote"
+          Write-Host "::add-mask::$seqServerUrlB64"
           $verifyScript = @"
           `$ErrorActionPreference = 'Stop'
           `$webConfigPath = Join-Path '$env:WEB_SERVER_REMOTE_PATH' 'web.config'
@@ -421,6 +444,7 @@ jobs:
           Write-Host 'Verified Seq environment variables in deployed web.config.'
           "@
           $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($verifyScript))
+          Write-Host "::add-mask::$encodedScript"
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"
 
       - name: Verify hello-world API

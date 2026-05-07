@@ -2,10 +2,23 @@ load("//tools:csharp_rules.bzl", "checknote_csharp_library")
 
 package(default_visibility = ["//visibility:private"])
 
+filegroup(
+    name = "test_sources",
+    srcs = glob(["**/*.cs"]),
+    visibility = ["//api/test/unit:__pkg__"],
+)
+
 checknote_csharp_library(
     name = "application",
     srcs = glob(["**/*.cs"]),
-    deps = ["//api/src/Common/Domain:domain"],
+    deps = [
+        "//api/src/Common/Domain:domain",
+        "@paket.main//mediatr",
+        "@paket.main//mediatr.contracts",
+        "@paket.main//microsoft.extensions.dependencyinjection.abstractions",
+        "@paket.main//microsoft.extensions.logging",
+        "@paket.main//microsoft.extensions.logging.abstractions",
+    ],
     out = "Checknote.Common.Application",
     target_frameworks = ["net9.0"],
     visibility = ["//api:common_application_consumers"],

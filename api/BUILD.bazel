@@ -18,15 +18,20 @@ package_group(
 package_group(
     name = "common_application_consumers",
     packages = [
+        "//api/src/App",
         "//api/src/Modules/Todos/Application",
+        "//api/src/Modules/Todos/Presentation",
         "//api/src/Modules/Users/Application",
+        "//api/src/Modules/Users/Presentation",
     ],
 )
 
 package_group(
     name = "common_presentation_consumers",
     packages = [
+        "//api/src/Modules/Todos/Composition",
         "//api/src/Modules/Todos/Presentation",
+        "//api/src/Modules/Users/Composition",
         "//api/src/Modules/Users/Presentation",
     ],
 )
@@ -44,6 +49,7 @@ package_group(
 package_group(
     name = "todos_application_consumers",
     packages = [
+        "//api/src/App",
         "//api/src/Modules/Todos/Composition",
         "//api/src/Modules/Todos/Infrastructure",
         "//api/src/Modules/Todos/Presentation",
@@ -81,6 +87,7 @@ package_group(
 package_group(
     name = "users_application_consumers",
     packages = [
+        "//api/src/App",
         "//api/src/Modules/Users/Composition",
         "//api/src/Modules/Users/Infrastructure",
         "//api/src/Modules/Users/Presentation",

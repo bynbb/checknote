@@ -1,7 +1,10 @@
 namespace Checknote.Modules.Todos.Application.Todos.GetTodos;
 
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Checknote.Common.Application.Messaging;
+using Checknote.Common.Domain;
 using Checknote.Modules.Todos.Application.Abstractions;
 using Checknote.Modules.Todos.Domain.Todos;
 
@@ -14,8 +17,10 @@ public sealed class GetTodosQueryHandler : IQueryHandler<GetTodosQuery, IReadOnl
         this.todoRepository = todoRepository;
     }
 
-    public IReadOnlyCollection<Todo> Handle(GetTodosQuery query)
+    public Task<Result<IReadOnlyCollection<Todo>>> Handle(
+        GetTodosQuery query,
+        CancellationToken cancellationToken)
     {
-        return todoRepository.GetTodos();
+        return Task.FromResult(Result.Success(todoRepository.GetTodos()));
     }
 }

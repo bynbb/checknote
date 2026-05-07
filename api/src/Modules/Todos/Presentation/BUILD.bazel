@@ -6,9 +6,12 @@ checknote_csharp_library(
     name = "presentation",
     srcs = glob(["**/*.cs"]),
     deps = [
+        "//api/src/Common/Application:application",
         "//api/src/Common/Presentation:presentation",
         "//api/src/Modules/Todos/Application:application",
         "//api/src/Modules/Todos/Domain:domain",
+        "@paket.main//mediatr",
+        "@paket.main//mediatr.contracts",
     ],
     out = "Checknote.Modules.Todos.Presentation",
     project_sdk = "web",

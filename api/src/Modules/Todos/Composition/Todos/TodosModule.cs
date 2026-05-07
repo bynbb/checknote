@@ -1,16 +1,15 @@
 namespace Checknote.Modules.Todos.Composition.Todos;
 
 using System;
+using Checknote.Common.Presentation.Endpoints;
 using Checknote.Modules.Todos.Application.Abstractions;
-using Checknote.Modules.Todos.Application.Todos.GetTodos;
-using Checknote.Modules.Todos.Application.Todos.SaveTaskList;
 using Checknote.Modules.Todos.Infrastructure.Database;
 using Checknote.Modules.Todos.Infrastructure.Todos;
-using Checknote.Modules.Todos.Presentation.Todos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using TodosPresentation = Checknote.Modules.Todos.Presentation.AssemblyReference;
 
 public static class TodosModule
 {
@@ -34,17 +33,11 @@ public static class TodosModule
             services.AddScoped<ITodoRepository, SqlTodoRepository>();
         }
 
-        services.AddScoped<GetTodosQueryHandler>();
-        services.AddScoped<SaveTaskListCommandHandler>();
-
         return services;
     }
 
     public static IEndpointRouteBuilder MapTodosModule(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGetTodosEndpoint();
-        endpoints.MapSaveTaskListEndpoint();
-
-        return endpoints;
+        return endpoints.MapEndpoints(TodosPresentation.Assembly);
     }
 }

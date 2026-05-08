@@ -5,8 +5,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  --mdc-outlined-card-outline-color: #d9e0ec;
+  border: 1px solid #d9e0ec;
   border-radius: 8px;
+  background: #ffffff;
   box-shadow: 0 10px 30px rgba(36, 46, 73, 0.1);
   color: #2d3a52;
   padding: 10px 12px;

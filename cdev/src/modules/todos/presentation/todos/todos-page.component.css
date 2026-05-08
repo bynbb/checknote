@@ -7,23 +7,19 @@
 
 .todo-panel {
   width: min(100%, 680px);
-  --mdc-outlined-card-outline-color: #d9e0ec;
+  border: 1px solid #d9e0ec;
   border-radius: 8px;
+  background: #ffffff;
   box-shadow: 0 18px 55px rgba(36, 46, 73, 0.12);
-  overflow: hidden;
+  padding: 28px;
 }
 
-.panel-header {
+.panel-header,
+.todo-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 28px 28px 0;
-}
-
-.todo-panel mat-card-content {
-  display: block;
-  padding: 0 28px 28px;
 }
 
 .eyebrow {
@@ -34,17 +30,18 @@
   text-transform: uppercase;
 }
 
-mat-card-title {
+h1 {
   margin: 0;
   font-size: clamp(2rem, 7vw, 3.5rem);
-  font-weight: 800;
   line-height: 1;
 }
 
-.count-chip {
-  --mdc-chip-elevated-container-color: #e8f3ee;
-  --mdc-chip-label-text-color: #1f6f54;
+.count-pill {
+  border-radius: 999px;
+  background: #e8f3ee;
+  color: #1f6f54;
   font-weight: 700;
+  padding: 10px 14px;
   white-space: nowrap;
 }
 
@@ -55,39 +52,54 @@ mat-card-title {
   margin: 28px 0 18px;
 }
 
-.todo-input {
+.todo-form input {
   min-width: 0;
+  border: 1px solid #c6cfdd;
+  border-radius: 6px;
+  padding: 14px 16px;
 }
 
-.add-button {
-  align-self: stretch;
-  min-width: 76px;
-  --mdc-filled-button-container-color: #234b78;
-  --mdc-filled-button-label-text-color: #ffffff;
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #234b78;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .filters {
+  display: flex;
+  gap: 8px;
   margin-bottom: 18px;
 }
 
-.filters mat-button-toggle {
-  min-width: 72px;
+.filters button {
+  background: #edf1f7;
+  color: #2d3a52;
 }
 
-.filters .mat-button-toggle-checked {
-  --mat-standard-button-toggle-selected-state-background-color: #234b78;
-  --mat-standard-button-toggle-selected-state-text-color: #ffffff;
+.filters button.active {
+  background: #234b78;
+  color: #ffffff;
 }
 
 .todo-list {
   display: grid;
   gap: 10px;
   list-style: none;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 0;
 }
 
-.todo-item {
+.todo-list li {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -97,57 +109,66 @@ mat-card-title {
   padding: 12px;
 }
 
-.todo-checkbox {
-  flex: 1 1 auto;
+.todo-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
-.todo-title {
+.todo-list span {
   overflow-wrap: anywhere;
 }
 
-.todo-item.completed .todo-title {
+.todo-list input {
+  width: 18px;
+  height: 18px;
+}
+
+.todo-list li.completed span {
   color: #728098;
   text-decoration: line-through;
 }
 
-.delete-button {
-  flex: 0 0 auto;
-  --mdc-outlined-button-label-text-color: #30405a;
-  --mdc-outlined-button-outline-color: #d8dfeb;
+.delete-button,
+.todo-footer button {
+  background: #f1f4f8;
+  color: #30405a;
 }
 
 .empty-state {
   border: 1px dashed #c6cfdd;
   border-radius: 8px;
   color: #63718a;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 24px;
   text-align: center;
 }
 
 .todo-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  border-top: 1px solid #e4e9f1;
   color: #53617a;
+  margin-top: 20px;
   padding-top: 18px;
 }
 
-@media (max-width: 560px) {
-  .panel-header {
-    align-items: stretch;
-    flex-direction: column;
-    padding: 20px 20px 0;
-  }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip: rect(0, 0, 0, 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
 
-  .todo-panel mat-card-content {
-    padding: 0 20px 20px;
+@media (max-width: 560px) {
+  .todo-panel {
+    padding: 20px;
   }
 
   .todo-footer,
-  .todo-item {
+  .todo-list li,
+  .panel-header {
     align-items: stretch;
     flex-direction: column;
   }

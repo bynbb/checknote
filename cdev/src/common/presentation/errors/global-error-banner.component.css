@@ -1,41 +1,15 @@
-.error-shell {
+.error-banner {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: #fff7f5;
-  border-bottom: 1px solid #efc5bf;
-  padding: 8px;
-}
-
-.error-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  border-color: #efc5bf;
-  border-radius: 8px;
   background: #fff7f5;
+  border-bottom: 1px solid #efc5bf;
   color: #672321;
-  box-shadow: 0 6px 18px rgba(103, 35, 33, 0.08);
-}
-
-.error-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-}
-
-.error-marker {
-  display: grid;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  border-radius: 50%;
-  background: #8a1f1f;
-  color: #ffffff;
-  font-weight: 800;
+  padding: 12px 18px;
 }
 
 .error-code,
@@ -53,14 +27,15 @@
   margin-top: 3px;
 }
 
-.dismiss-button {
+button {
+  border: 0;
+  border-radius: 6px;
   background: #672321;
   color: #ffffff;
+  cursor: pointer;
   font-weight: 700;
-}
-
-mat-card-actions {
-  padding: 8px 14px 8px 0;
+  min-height: 40px;
+  padding: 0 14px;
 }
 
 @media (max-width: 560px) {
@@ -69,16 +44,7 @@ mat-card-actions {
     flex-direction: column;
   }
 
-  .error-content {
-    align-items: flex-start;
-  }
-
-  mat-card-actions {
-    justify-content: stretch;
-    padding: 0 14px 12px;
-  }
-
-  .dismiss-button {
+  button {
     width: 100%;
   }
 }

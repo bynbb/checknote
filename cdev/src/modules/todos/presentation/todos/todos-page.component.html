@@ -1,64 +1,52 @@
 <main class="todo-shell">
-  <mat-card class="todo-panel" appearance="outlined" aria-labelledby="todo-title">
-    <mat-card-header class="panel-header">
+  <section class="todo-panel" aria-labelledby="todo-title">
+    <div class="panel-header">
       <div>
         <p class="eyebrow">Angular + Bazel</p>
-        <mat-card-title id="todo-title">Ada's Task List</mat-card-title>
+        <h1 id="todo-title">Ada's Task List</h1>
       </div>
-      <mat-chip-set aria-label="Task status">
-        <mat-chip class="count-chip">{{ facade.activeCount() }} active</mat-chip>
-      </mat-chip-set>
-    </mat-card-header>
+      <div class="count-pill">{{ facade.activeCount() }} active</div>
+    </div>
 
-    <mat-card-content>
-      <form class="todo-form" (ngSubmit)="facade.addTodo()">
-        <mat-form-field class="todo-input" appearance="outline" subscriptSizing="dynamic">
-          <mat-label>New todo</mat-label>
-          <input
-            matInput
-            id="todo-input"
-            name="todo"
-            type="text"
-            autocomplete="off"
-            [ngModel]="facade.newTodo()"
-            (ngModelChange)="facade.newTodo.set($event)"
-          >
-        </mat-form-field>
-        <button mat-flat-button class="add-button" type="submit">Add</button>
-      </form>
+    <form class="todo-form" (ngSubmit)="facade.addTodo()">
+      <label class="sr-only" for="todo-input">New todo</label>
+      <input
+        id="todo-input"
+        name="todo"
+        type="text"
+        autocomplete="off"
+        placeholder="Add something useful"
+        [ngModel]="facade.newTodo()"
+        (ngModelChange)="facade.newTodo.set($event)"
+      >
+      <button type="submit">Add</button>
+    </form>
 
-      <mat-button-toggle-group class="filters" [value]="facade.filter()" aria-label="Todo filters">
-        <mat-button-toggle value="all" (click)="facade.setFilter('all')">All</mat-button-toggle>
-        <mat-button-toggle value="active" (click)="facade.setFilter('active')">Active</mat-button-toggle>
-        <mat-button-toggle value="completed" (click)="facade.setFilter('completed')">Done</mat-button-toggle>
-      </mat-button-toggle-group>
+    <div class="filters" role="group" aria-label="Todo filters">
+      <button type="button" [class.active]="facade.filter() === 'all'" (click)="facade.setFilter('all')">All</button>
+      <button type="button" [class.active]="facade.filter() === 'active'" (click)="facade.setFilter('active')">Active</button>
+      <button type="button" [class.active]="facade.filter() === 'completed'" (click)="facade.setFilter('completed')">Done</button>
+    </div>
 
-      @if (facade.visibleTodos().length) {
-        <ul class="todo-list">
-          @for (todo of facade.visibleTodos(); track todo.id) {
-            <li class="todo-item" [class.completed]="todo.completed">
-              <mat-checkbox
-                class="todo-checkbox"
-                [checked]="todo.completed"
-                (change)="facade.toggleTodo(todo.id)"
-                [attr.aria-label]="'Toggle ' + todo.title"
-              >
-                <span class="todo-title">{{ todo.title }}</span>
-              </mat-checkbox>
-              <button mat-stroked-button type="button" class="delete-button" (click)="facade.deleteTodo(todo)" aria-label="Delete todo">Delete</button>
-            </li>
-          }
-        </ul>
-      } @else {
-        <p class="empty-state">Nothing here yet.</p>
-      }
+    @if (facade.visibleTodos().length) {
+      <ul class="todo-list">
+        @for (todo of facade.visibleTodos(); track todo.id) {
+          <li [class.completed]="todo.completed">
+            <label>
+              <input type="checkbox" [checked]="todo.completed" (change)="facade.toggleTodo(todo.id)">
+              <span>{{ todo.title }}</span>
+            </label>
+            <button type="button" class="delete-button" (click)="facade.deleteTodo(todo)" aria-label="Delete todo">Delete</button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty-state">Nothing here yet.</p>
+    }
 
-      <mat-divider />
-
-      <footer class="todo-footer">
-        <span>{{ facade.completedCount() }} completed</span>
-        <button mat-stroked-button type="button" (click)="facade.clearCompleted()" [disabled]="facade.completedCount() === 0">Clear completed</button>
-      </footer>
-    </mat-card-content>
-  </mat-card>
+    <footer class="todo-footer">
+      <span>{{ facade.completedCount() }} completed</span>
+      <button type="button" (click)="facade.clearCompleted()" [disabled]="facade.completedCount() === 0">Clear completed</button>
+    </footer>
+  </section>
 </main>

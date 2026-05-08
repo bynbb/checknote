@@ -32,7 +32,9 @@ public sealed class GetTodosEndpoint : IEndpoint
                 ApiResults.Problem);
         })
         .WithName("GetTodos")
-        .WithTags("Todos");
+        .WithTags("Todos")
+        .Produces<IEnumerable<TodoResponse>>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }
 
@@ -60,7 +62,10 @@ public sealed class SaveTaskListEndpoint : IEndpoint
                     ApiResults.Problem);
             })
             .WithName("SaveTaskList")
-            .WithTags("Todos");
+            .WithTags("Todos")
+            .Accepts<SaveTaskListRequest>("application/json")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }
 

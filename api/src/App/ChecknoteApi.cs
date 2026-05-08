@@ -107,13 +107,15 @@ public static class ChecknoteApi
                 HelloWorldRoute,
                 () => Results.Text(HelloWorldResponse, "text/plain"))
             .WithName("HelloWorld")
-            .WithTags("System");
+            .WithTags("System")
+            .Produces<string>(StatusCodes.Status200OK, "text/plain");
 
         app.MapGet(
                 "/health",
-                () => Results.Json(new { service = "checknote-api", status = "ok" }))
+                () => Results.Ok(new HealthResponse("checknote-api", "ok")))
             .WithName("Health")
-            .WithTags("System");
+            .WithTags("System")
+            .Produces<HealthResponse>(StatusCodes.Status200OK);
     }
 
     private static void MapStaticSite(WebApplication app)
@@ -211,3 +213,5 @@ public static class ChecknoteApi
         return true;
     }
 }
+
+public sealed record HealthResponse(string Service, string Status);

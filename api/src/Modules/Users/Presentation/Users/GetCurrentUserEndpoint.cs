@@ -22,10 +22,20 @@ public sealed class GetCurrentUserEndpoint : IEndpoint
             Result<User> result = await sender.Send(new GetCurrentUserQuery(), cancellationToken);
 
             return result.Match<User, IResult>(
-                Results.Ok,
+                user => Results.Ok(UserResponse.From(user)),
                 ApiResults.Problem);
         })
         .WithName("GetCurrentUser")
-        .WithTags("Users");
+        .WithTags("Users")
+        .Produces<UserResponse>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status400BadRequest);
+    }
+}
+
+public sealed record UserResponse(string Id, string Name, string Email)
+{
+    public static UserResponse From(User user)
+    {
+        return new UserResponse(user.Id, user.Name, user.Email);
     }
 }

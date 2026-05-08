@@ -63,6 +63,101 @@ function Wait-ForSmokeServer {
     throw 'Smoke server did not start.'
 }
 
+function Get-OpenApiOperation {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object] $OpenApi,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Path,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Method
+    )
+
+    $pathProperty = $OpenApi.paths.PSObject.Properties[$Path]
+
+    if (-not $pathProperty) {
+        throw "Expected Swagger JSON to document path '$Path'."
+    }
+
+    $operationProperty = $pathProperty.Value.PSObject.Properties[$Method]
+
+    if (-not $operationProperty) {
+        throw "Expected Swagger JSON to document $Method $Path."
+    }
+
+    return $operationProperty.Value
+}
+
+function Assert-OpenApiResponses {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object] $OpenApi,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Path,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Method,
+
+        [Parameter(Mandatory = $true)]
+        [string[]] $StatusCodes
+    )
+
+    $operation = Get-OpenApiOperation -OpenApi $OpenApi -Path $Path -Method $Method
+
+    foreach ($statusCode in $StatusCodes) {
+        if (-not $operation.responses.PSObject.Properties[$statusCode]) {
+            throw "Expected Swagger JSON to document $statusCode for $Method $Path."
+        }
+    }
+}
+
+function Assert-OpenApiTag {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object] $OpenApi,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Path,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Method,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ExpectedTag
+    )
+
+    $operation = Get-OpenApiOperation -OpenApi $OpenApi -Path $Path -Method $Method
+
+    if ($operation.tags -notcontains $ExpectedTag) {
+        throw "Expected Swagger JSON to tag $Method $Path as '$ExpectedTag'."
+    }
+}
+
+function Assert-OpenApiRequestBodyContent {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object] $OpenApi,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Path,
+
+        [Parameter(Mandatory = $true)]
+        [string] $Method,
+
+        [Parameter(Mandatory = $true)]
+        [string] $ContentType
+    )
+
+    $operation = Get-OpenApiOperation -OpenApi $OpenApi -Path $Path -Method $Method
+
+    if (-not $operation.requestBody.content.PSObject.Properties[$ContentType]) {
+        throw "Expected Swagger JSON to document $ContentType request body for $Method $Path."
+    }
+}
+
 try {
     $env:ASPNETCORE_ENVIRONMENT = 'Production'
     $proc = Start-Process -FilePath $apiExe -WorkingDirectory $smokeDir -WindowStyle Hidden -PassThru
@@ -175,6 +270,19 @@ try {
     if ($swaggerJson.StatusCode -ne 200 -or $swaggerJson.Content -notmatch '"/api/todos"') {
         throw 'Expected Swagger JSON to include Checknote API routes.'
     }
+
+    $openApi = $swaggerJson.Content | ConvertFrom-Json
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/hello-world' -Method 'get' -StatusCodes @('200')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/health' -Method 'get' -StatusCodes @('200')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos' -Method 'get' -StatusCodes @('200', '400')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -StatusCodes @('204', '400')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/users/current' -Method 'get' -StatusCodes @('200', '400')
+    Assert-OpenApiRequestBodyContent -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ContentType 'application/json'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/hello-world' -Method 'get' -ExpectedTag 'System'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/health' -Method 'get' -ExpectedTag 'System'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos' -Method 'get' -ExpectedTag 'Todos'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ExpectedTag 'Todos'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/api/users/current' -Method 'get' -ExpectedTag 'Users'
 
     Set-Content -LiteralPath $Stamp -Value 'ok' -NoNewline
 }

@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  repository-guards:
-    name: Repository guards
+  build:
+    name: Build
     runs-on: windows-2025-vs2026
 
     steps:
@@ -52,84 +52,196 @@ jobs:
             throw "Expected tracked AGENTS.md files are missing: $($missingAgentFiles -join ', ')"
           }
 
-  build:
-    name: Build
-    runs-on: windows-2025-vs2026
-    needs: repository-guards
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          cache: npm
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
 
+      - name: Restore node_modules cache
+        id: node-modules-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package.json', 'package-lock.json') }}
+
+      - name: Initialize CI timing summary
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          @(
+            '## Checknote CI Timing',
+            '',
+            '| Signal | Value |',
+            '| --- | ---: |'
+          ) | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Record node_modules cache restore
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cacheHit = '${{ steps.node-modules-cache.outputs.cache-hit }}'
+          $matchedKey = '${{ steps.node-modules-cache.outputs.cache-matched-key }}'
+          if ([string]::IsNullOrWhiteSpace($cacheHit)) {
+            $cacheHit = 'false'
+          }
+          if ([string]::IsNullOrWhiteSpace($matchedKey)) {
+            $matchedKey = 'none'
+          }
+          '| node_modules cache restore | hit={0}; matched={1} |' -f $cacheHit, $matchedKey | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Restore Bazel caches
+        id: bazel-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            ${{ runner.temp }}/checknote-bazel-disk-cache
+            ${{ runner.temp }}/checknote-bazel-repository-cache
+            ${{ runner.temp }}/checknote-bazelisk
+          key: bazel-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'package.json', 'package-lock.json', '**/BUILD.bazel', 'tools/**/*.bzl', 'tools/**/*.mjs', 'tools/**/*.ps1') }}
+          restore-keys: |
+            bazel-v2-${{ runner.os }}-${{ runner.arch }}-
+            bazel-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Record Bazel caches restore
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cacheHit = '${{ steps.bazel-cache.outputs.cache-hit }}'
+          $matchedKey = '${{ steps.bazel-cache.outputs.cache-matched-key }}'
+          if ([string]::IsNullOrWhiteSpace($cacheHit)) {
+            $cacheHit = 'false'
+          }
+          if ([string]::IsNullOrWhiteSpace($matchedKey)) {
+            $matchedKey = 'none'
+          }
+          '| Bazel caches restore | hit={0}; matched={1} |' -f $cacheHit, $matchedKey | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Configure Bazel caches
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $diskCachePath = Join-Path $env:RUNNER_TEMP 'checknote-bazel-disk-cache'
+          $repositoryCachePath = Join-Path $env:RUNNER_TEMP 'checknote-bazel-repository-cache'
+          $bazeliskHome = Join-Path $env:RUNNER_TEMP 'checknote-bazelisk'
+          New-Item -ItemType Directory -Force -Path $diskCachePath, $repositoryCachePath, $bazeliskHome | Out-Null
+
+          $diskCacheBazelPath = $diskCachePath.Replace('\', '/')
+          $repositoryCacheBazelPath = $repositoryCachePath.Replace('\', '/')
+          $userBazelRcPath = Join-Path $HOME '.bazelrc'
+          @(
+            "build --disk_cache=$diskCacheBazelPath",
+            "build --repository_cache=$repositoryCacheBazelPath",
+            "build --show_progress_rate_limit=15"
+          ) | Set-Content -LiteralPath $userBazelRcPath -Encoding utf8
+          "BAZELISK_HOME=$bazeliskHome" | Add-Content -LiteralPath $env:GITHUB_ENV
+
+          Write-Host "Configured Bazel disk cache at $diskCachePath"
+          Write-Host "Configured Bazel repository cache at $repositoryCachePath"
+          Write-Host "Configured Bazelisk home at $bazeliskHome"
+
       - name: Install dependencies
-        run: npm ci
-
-      - name: Build with Bazel
-        run: npm run build
-
-      - name: Test Checknote
-        run: npm test
-
-      - name: Stage build artifact
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $bazelBin = (& npx bazelisk info bazel-bin).Trim()
-          $artifactPath = Join-Path $bazelBin 'api\src\App\checknote-site.zip'
-          if (!(Test-Path $artifactPath)) {
-            throw "Expected Bazel site artifact was not found: $artifactPath"
+          $nodeModulesCacheHit = '${{ steps.node-modules-cache.outputs.cache-hit }}'
+          if ($nodeModulesCacheHit -eq 'true') {
+            $expectedPackages = @(
+              'node_modules/@angular/core/package.json',
+              'node_modules/@bazel/bazelisk/package.json',
+              'node_modules/typescript/package.json'
+            )
+            $missingPackages = @($expectedPackages | Where-Object { !(Test-Path $_) })
+            if ($missingPackages.Count -gt 0) {
+              throw "node_modules cache hit, but expected packages were missing: $($missingPackages -join ', ')"
+            }
+
+            '| npm ci --prefer-offline --no-audit --no-fund --ignore-scripts | skipped; node_modules cache hit |' | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+            exit 0
           }
+
+          $duration = Measure-Command {
+            npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
+            if ($LASTEXITCODE -ne 0) {
+              throw "npm ci failed with exit code $LASTEXITCODE."
+            }
+          }
+          '| npm ci --prefer-offline --no-audit --no-fund --ignore-scripts | {0:n1}s |' -f $duration.TotalSeconds | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Save node_modules cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.node-modules-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package.json', 'package-lock.json') }}
+
+      - name: Build and test with Bazel
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $duration = Measure-Command {
+            npm run ci:build-and-test
+            if ($LASTEXITCODE -ne 0) {
+              throw "npm run ci:build-and-test failed with exit code $LASTEXITCODE."
+            }
+          }
+          '| npm run ci:build-and-test | {0:n1}s |' -f $duration.TotalSeconds | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
+
+      - name: Stage deploy artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bazelisk = Join-Path $PWD.Path 'node_modules\.bin\bazelisk.cmd'
+          $bazelBin = (& $bazelisk info bazel-bin).Trim()
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Copy-Item -LiteralPath $artifactPath -Destination artifacts/checknote-site.zip -Force
 
-      - name: Stage database tool artifact
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $target = '//deployment/database:checknote_db_tool_publish'
-          $executionRoot = (& npx bazelisk info execution_root).Trim()
-          $toolExeFile = & npx bazelisk cquery $target --output=files |
-            Where-Object { $_ -match 'bazel-out/.*/checknote_db_tool\.exe$' } |
-            Select-Object -First 1
+          $artifacts = @(
+            @{
+              Source = Join-Path $bazelBin 'api\src\App\checknote-site.zip'
+              Destination = 'artifacts/checknote-site.zip'
+              Description = 'site'
+            },
+            @{
+              Source = Join-Path $bazelBin 'deployment\database\checknote-db-tool.zip'
+              Destination = 'artifacts/checknote-db-tool.zip'
+              Description = 'database tool'
+            }
+          )
 
-          if ([string]::IsNullOrWhiteSpace($toolExeFile)) {
-            throw 'Could not locate the published Checknote database tool executable.'
+          foreach ($artifact in $artifacts) {
+            if (!(Test-Path $artifact.Source)) {
+              throw "Expected Bazel $($artifact.Description) artifact was not found: $($artifact.Source)"
+            }
+            Copy-Item -LiteralPath $artifact.Source -Destination $artifact.Destination -Force
           }
 
-          $toolOutputPath = Join-Path $executionRoot (Split-Path $toolExeFile -Parent)
-          if (!(Test-Path (Join-Path $toolOutputPath 'checknote_db_tool.exe'))) {
-            throw "Expected published database tool was not found: $toolOutputPath"
-          }
-
-          New-Item -ItemType Directory -Force -Path artifacts/checknote-db-tool | Out-Null
-          Copy-Item -Path (Join-Path $toolOutputPath '*') -Destination artifacts/checknote-db-tool -Recurse -Force
+      - name: Save Bazel caches
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.bazel-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ${{ runner.temp }}/checknote-bazel-disk-cache
+            ${{ runner.temp }}/checknote-bazel-repository-cache
+            ${{ runner.temp }}/checknote-bazelisk
+          key: bazel-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.bazelversion', '.bazelrc', 'MODULE.bazel', 'MODULE.bazel.lock', 'package.json', 'package-lock.json', '**/BUILD.bazel', 'tools/**/*.bzl', 'tools/**/*.mjs', 'tools/**/*.ps1') }}
 
       - name: Upload Checknote site artifact
         uses: actions/upload-artifact@v7
         with:
-          name: checknote-site
           path: artifacts/checknote-site.zip
+          archive: false
           if-no-files-found: error
           retention-days: 14
 
       - name: Upload Checknote database tool artifact
         uses: actions/upload-artifact@v7
         with:
-          name: checknote-db-tool
-          path: artifacts/checknote-db-tool/**
+          path: artifacts/checknote-db-tool.zip
+          archive: false
           if-no-files-found: error
           retention-days: 14
 
@@ -145,23 +257,35 @@ jobs:
 
     steps:
       - name: Download Checknote site artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
-          name: checknote-site
+          name: checknote-site.zip
           path: artifact/site
+          skip-decompress: true
 
       - name: Download Checknote database tool artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
-          name: checknote-db-tool
+          name: checknote-db-tool.zip
           path: artifact/db-tool
+          skip-decompress: true
 
       - name: Unpack Checknote site
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $siteZip = @('artifact/site/checknote-site.zip', 'artifact/site') |
+            Where-Object { Test-Path $_ -PathType Leaf } |
+            Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($siteZip)) {
+            throw 'Expected downloaded site artifact was not found.'
+          }
+
           New-Item -ItemType Directory -Force -Path deploy | Out-Null
-          Expand-Archive -Path artifact/site/checknote-site.zip -DestinationPath deploy -Force
+          tar -xf $siteZip -C deploy
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not unpack $siteZip."
+          }
           if (!(Test-Path deploy/web.config)) {
             throw 'Expected deploy/web.config was not found.'
           }
@@ -174,15 +298,30 @@ jobs:
           }
           $apiExe = @(Get-ChildItem -Path deploy -Filter *.exe -File)
           if ($apiExe.Count -eq 0) {
-            throw 'Expected the self-contained API publish output to include an executable.'
+            throw 'Expected the API publish output to include an executable.'
           }
 
       - name: Verify Checknote database tool artifact
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          if (!(Test-Path artifact/db-tool/checknote_db_tool.exe)) {
-            throw 'Expected database tool artifact checknote_db_tool.exe was not found.'
+          $artifactPath = @('artifact/db-tool/checknote-db-tool.zip', 'artifact/db-tool') |
+            Where-Object { Test-Path $_ -PathType Leaf } |
+            Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($artifactPath)) {
+            throw 'Expected database tool artifact was not found.'
+          }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $artifactPath).Path)
+          try {
+            $toolEntry = $zip.Entries | Where-Object { $_.FullName -eq 'checknote_db_tool.exe' } | Select-Object -First 1
+            if ($null -eq $toolEntry) {
+              throw 'Expected database tool artifact to contain checknote_db_tool.exe.'
+            }
+          }
+          finally {
+            $zip.Dispose()
           }
 
       - name: Configure SSH
@@ -218,8 +357,22 @@ jobs:
           Write-Host "::add-mask::$remoteDbToolZipPath"
           Write-Host "::add-mask::$remote"
 
-          Compress-Archive -Path deploy/* -DestinationPath checknote-site.zip -Force
-          Compress-Archive -Path artifact/db-tool/* -DestinationPath checknote-db-tool.zip -Force
+          $siteZip = @('artifact/site/checknote-site.zip', 'artifact/site') |
+            Where-Object { Test-Path $_ -PathType Leaf } |
+            Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($siteZip)) {
+            throw 'Expected downloaded site artifact was not found.'
+          }
+
+          $dbToolZip = @('artifact/db-tool/checknote-db-tool.zip', 'artifact/db-tool') |
+            Where-Object { Test-Path $_ -PathType Leaf } |
+            Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($dbToolZip)) {
+            throw 'Expected downloaded database tool artifact was not found.'
+          }
+
+          Copy-Item -LiteralPath $siteZip -Destination checknote-site.zip -Force
+          Copy-Item -LiteralPath $dbToolZip -Destination checknote-db-tool.zip -Force
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -Command `"New-Item -ItemType Directory -Force -Path '$remoteDeployPath' | Out-Null`""
           scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT checknote-site.zip "${remote}:$remoteZipPath"
           scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT checknote-db-tool.zip "${remote}:$remoteDbToolZipPath"
@@ -251,8 +404,12 @@ jobs:
           `$ErrorActionPreference = 'Stop'
           `$stage = '$remoteDeployPath'
           `$toolRoot = Join-Path `$stage 'db-tool'
+          if (Test-Path `$toolRoot) {
+            Remove-Item -LiteralPath `$toolRoot -Recurse -Force
+          }
           New-Item -ItemType Directory -Force -Path `$toolRoot | Out-Null
-          Expand-Archive -Path (Join-Path `$stage 'checknote-db-tool.zip') -DestinationPath `$toolRoot -Force
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path `$stage 'checknote-db-tool.zip'), `$toolRoot)
           `$toolPath = Join-Path `$toolRoot 'checknote_db_tool.exe'
           if (!(Test-Path `$toolPath)) {
             throw 'Expected database tool executable was not found on the server.'
@@ -340,8 +497,12 @@ jobs:
 
           $expanded = Join-Path $Stage 'site'
           $backup = Join-Path $Site ('.backups/' + (Get-Date -Format 'yyyyMMddHHmmss'))
+          if (Test-Path $expanded) {
+            Remove-Item -LiteralPath $expanded -Recurse -Force
+          }
           New-Item -ItemType Directory -Force -Path $Site, $backup, $expanded | Out-Null
-          Expand-Archive -Path (Join-Path $Stage 'checknote-site.zip') -DestinationPath $expanded -Force
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $Stage 'checknote-site.zip'), $expanded)
           if (!(Test-Path (Join-Path $expanded 'web.config'))) {
             throw 'Expected site artifact web.config was not found.'
           }
@@ -453,9 +614,12 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $url = 'https://www.checknote.io/hello-world'
           $expected = 'Hello from Checknote API'
-          for ($attempt = 1; $attempt -le 6; $attempt++) {
+          $deadline = (Get-Date).AddMinutes(5)
+          $attempt = 0
+          while ((Get-Date) -lt $deadline) {
+            $attempt++
             try {
-              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20
+              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 15
               $body = $response.Content.Trim()
               if ($response.StatusCode -eq 200 -and $body -eq $expected) {
                 Write-Host "Verified $url"
@@ -468,7 +632,7 @@ jobs:
             }
             Start-Sleep -Seconds 5
           }
-          throw "Expected $url to return '$expected'."
+          throw "Expected $url to return '$expected' before the 5-minute readiness deadline."
 
       - name: Verify Todos API
         shell: pwsh

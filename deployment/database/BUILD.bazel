@@ -1,4 +1,5 @@
 load("@rules_dotnet//dotnet:defs.bzl", "publish_binary")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 load("//tools:csharp_rules.bzl", "checknote_csharp_binary", "checknote_csharp_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -29,4 +30,10 @@ publish_binary(
     binary = ":checknote_db_tool",
     self_contained = True,
     target_framework = "net9.0",
+)
+
+pkg_zip(
+    name = "checknote_db_tool_zip",
+    srcs = [":checknote_db_tool_publish"],
+    out = "checknote-db-tool.zip",
 )

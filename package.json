@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "bazelisk build //api:checknote_site_zip //deployment/database:checknote_db_tool_publish",
+    "build": "bazelisk build //api:checknote_site_zip //deployment/database:checknote_db_tool_zip",
+    "ci:build-and-test": "bazelisk build //api:checknote_site_zip //deployment/database:checknote_db_tool_zip //api/test/unit:unit_tests //api/src/App:api_route_smoke_check //cdev/test/unit:unit_tests //cdev/test/architecture:architecture_tests //tools/test:unit_tests",
     "db:apply": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/apply-database.ps1",
     "test": "npm run test:backend && npm run test:frontend && npm run test:tools",
     "test:backend": "npm run test:api",

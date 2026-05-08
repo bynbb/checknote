@@ -54,7 +54,7 @@ checknote_csharp_binary(
 publish_binary(
     name = "checknote_api_publish",
     binary = ":checknote_api",
-    self_contained = True,
+    self_contained = False,
     target_framework = "net9.0",
 )
 

@@ -24,6 +24,8 @@ public sealed class GetCurrentUserEndpoint : IEndpoint
             return result.Match<User, IResult>(
                 Results.Ok,
                 ApiResults.Problem);
-        });
+        })
+        .WithName("GetCurrentUser")
+        .WithTags("Users");
     }
 }

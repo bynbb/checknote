@@ -36,6 +36,13 @@ checknote_csharp_library(
         "@paket.main//serilog.extensions.logging",
         "@paket.main//serilog.settings.configuration",
         "@paket.main//serilog.sinks.seq",
+        "@paket.main//swashbuckle.aspnetcore",
+        "@paket.main//swashbuckle.aspnetcore.swagger",
+        "@paket.main//swashbuckle.aspnetcore.swaggergen",
+        "@paket.main//swashbuckle.aspnetcore.swaggerui",
+    ],
+    compiler_options = [
+        "/features:InterceptorsNamespaces=Microsoft.AspNetCore.Http.Generated",
     ],
     out = "Checknote.Api",
     project_sdk = "web",

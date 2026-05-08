@@ -36,22 +36,23 @@ $port = $listener.LocalEndpoint.Port
 $listener.Stop()
 
 $oldUrls = $env:ASPNETCORE_URLS
+$oldEnvironment = $env:ASPNETCORE_ENVIRONMENT
 $env:ASPNETCORE_URLS = "http://127.0.0.1:$port"
 $proc = $null
 $client = $null
 
-try {
-    $proc = Start-Process -FilePath $apiExe -WorkingDirectory $smokeDir -WindowStyle Hidden -PassThru
-    $base = "http://127.0.0.1:$port"
-    $started = $false
+function Wait-ForSmokeServer {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $BaseUrl
+    )
 
     foreach ($attempt in 1..30) {
         try {
-            $health = Invoke-WebRequest -Uri "$base/health" -UseBasicParsing -TimeoutSec 2
+            $health = Invoke-WebRequest -Uri "$BaseUrl/health" -UseBasicParsing -TimeoutSec 2
 
             if ($health.StatusCode -eq 200) {
-                $started = $true
-                break
+                return
             }
         }
         catch {
@@ -59,9 +60,15 @@ try {
         }
     }
 
-    if (-not $started) {
-        throw 'Smoke server did not start.'
-    }
+    throw 'Smoke server did not start.'
+}
+
+try {
+    $env:ASPNETCORE_ENVIRONMENT = 'Production'
+    $proc = Start-Process -FilePath $apiExe -WorkingDirectory $smokeDir -WindowStyle Hidden -PassThru
+    $base = "http://127.0.0.1:$port"
+
+    Wait-ForSmokeServer -BaseUrl $base
 
     $index = Invoke-WebRequest -Uri "$base/" -UseBasicParsing -TimeoutSec 5
     $indexCache = [string] $index.Headers['Cache-Control']
@@ -94,6 +101,16 @@ try {
     try {
         Invoke-WebRequest -Uri "$base/api/missing" -UseBasicParsing -TimeoutSec 5 | Out-Null
         throw 'Expected unknown API route to return 404.'
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 404) {
+            throw
+        }
+    }
+
+    try {
+        Invoke-WebRequest -Uri "$base/swagger/index.html" -UseBasicParsing -TimeoutSec 5 | Out-Null
+        throw 'Expected Swagger UI to be unavailable without an explicit enablement setting.'
     }
     catch {
         if ($_.Exception.Response.StatusCode.value__ -ne 404) {
@@ -139,6 +156,26 @@ try {
         throw "Unexpected /api/users/current response: $($user.Content)"
     }
 
+    Stop-Process -Id $proc.Id -Force
+    $proc = $null
+    Start-Sleep -Milliseconds 500
+
+    $env:ASPNETCORE_ENVIRONMENT = 'Development'
+    $proc = Start-Process -FilePath $apiExe -WorkingDirectory $smokeDir -WindowStyle Hidden -PassThru
+
+    Wait-ForSmokeServer -BaseUrl $base
+
+    $swaggerUi = Invoke-WebRequest -Uri "$base/swagger/index.html" -UseBasicParsing -TimeoutSec 5
+    $swaggerJson = Invoke-WebRequest -Uri "$base/swagger/v1/swagger.json" -UseBasicParsing -TimeoutSec 5
+
+    if ($swaggerUi.StatusCode -ne 200 -or $swaggerUi.Content -notmatch 'Swagger UI') {
+        throw 'Expected Swagger UI to be available in Development.'
+    }
+
+    if ($swaggerJson.StatusCode -ne 200 -or $swaggerJson.Content -notmatch '"/api/todos"') {
+        throw 'Expected Swagger JSON to include Checknote API routes.'
+    }
+
     Set-Content -LiteralPath $Stamp -Value 'ok' -NoNewline
 }
 finally {
@@ -151,4 +188,5 @@ finally {
     }
 
     $env:ASPNETCORE_URLS = $oldUrls
+    $env:ASPNETCORE_ENVIRONMENT = $oldEnvironment
 }

@@ -10,6 +10,7 @@ using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
@@ -20,6 +21,7 @@ public static class ChecknoteApi
 {
     public const string HelloWorldRoute = "/hello-world";
     public const string HelloWorldResponse = "Hello from Checknote API";
+    public const string EnableSwaggerVariable = "CHECKNOTE_ENABLE_SWAGGER";
     private const string MediatRLicenseLogCategory = "LuckyPennySoftware.MediatR.License";
 
     public static WebApplication Create(string[] args)
@@ -35,6 +37,8 @@ public static class ChecknoteApi
         builder.Logging.AddFilter(MediatRLicenseLogCategory, LogLevel.None);
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
         builder.Services.AddApplication(
             TodosApplication.Assembly,
             UsersApplication.Assembly);
@@ -42,6 +46,12 @@ public static class ChecknoteApi
         builder.Services.AddUsersModule();
 
         WebApplication app = builder.Build();
+
+        if (ShouldExposeSwagger(app))
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
         app.UseExceptionHandler();
         app.UseSerilogRequestLogging(options =>
@@ -93,26 +103,17 @@ public static class ChecknoteApi
 
     private static void MapApiRoutes(WebApplication app)
     {
-        app.Use(async (context, next) =>
-        {
-            PathString path = context.Request.Path;
+        app.MapGet(
+                HelloWorldRoute,
+                () => Results.Text(HelloWorldResponse, "text/plain"))
+            .WithName("HelloWorld")
+            .WithTags("System");
 
-            if (path == HelloWorldRoute || path == $"{HelloWorldRoute}/")
-            {
-                context.Response.ContentType = "text/plain";
-                await context.Response.WriteAsync(HelloWorldResponse);
-                return;
-            }
-
-            if (path == "/health")
-            {
-                context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync("""{"service":"checknote-api","status":"ok"}""");
-                return;
-            }
-
-            await next();
-        });
+        app.MapGet(
+                "/health",
+                () => Results.Json(new { service = "checknote-api", status = "ok" }))
+            .WithName("Health")
+            .WithTags("System");
     }
 
     private static void MapStaticSite(WebApplication app)
@@ -131,6 +132,7 @@ public static class ChecknoteApi
             if (context.Response.HasStarted ||
                 context.Response.StatusCode != StatusCodes.Status404NotFound ||
                 context.Request.Path.StartsWithSegments("/api") ||
+                context.Request.Path.StartsWithSegments("/swagger") ||
                 Path.HasExtension(context.Request.Path))
             {
                 return;
@@ -148,6 +150,18 @@ public static class ChecknoteApi
             ApplyStaticFileCachePolicy(context.Response, "index.html");
             await context.Response.SendFileAsync(indexPath);
         });
+    }
+
+    private static bool ShouldExposeSwagger(WebApplication app)
+    {
+        if (app.Environment.IsDevelopment())
+        {
+            return true;
+        }
+
+        string? setting = Environment.GetEnvironmentVariable(EnableSwaggerVariable);
+
+        return bool.TryParse(setting, out bool enabled) && enabled;
     }
 
     private static void ApplyStaticFileCachePolicy(HttpResponse response, string fileName)

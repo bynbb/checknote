@@ -10,3 +10,4 @@ nuget MediatR 14.1.0
 nuget Serilog.AspNetCore 9.0.0
 nuget Serilog.Sinks.Seq 9.0.0
 nuget SonarAnalyzer.CSharp >= 10.25.0 < 11.0.0
+nuget Swashbuckle.AspNetCore 10.1.7

@@ -30,7 +30,9 @@ public sealed class GetTodosEndpoint : IEndpoint
             return result.Match<IReadOnlyCollection<Todo>, IResult>(
                 todos => Results.Ok(todos.Select(TodoResponse.From)),
                 ApiResults.Problem);
-        });
+        })
+        .WithName("GetTodos")
+        .WithTags("Todos");
     }
 }
 
@@ -56,7 +58,9 @@ public sealed class SaveTaskListEndpoint : IEndpoint
                 return result.Match<IResult>(
                     Results.NoContent,
                     ApiResults.Problem);
-            });
+            })
+            .WithName("SaveTaskList")
+            .WithTags("Todos");
     }
 }
 

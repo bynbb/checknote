@@ -11,6 +11,7 @@ checknote_csharp_binary(
         "//api/src/App:logging",
         "//api/src/Common/Application:application",
         "//api/src/Common/Domain:domain",
+        "//api/src/Common/Presentation:presentation",
         "//api/src/Modules/Todos/Application:application",
         "//api/src/Modules/Todos/Domain:domain",
         "//api/src/Modules/Users/Application:application",
@@ -22,6 +23,9 @@ checknote_csharp_binary(
         "@paket.main//microsoft.extensions.dependencyinjection.abstractions",
         "@paket.main//microsoft.extensions.logging",
         "@paket.main//microsoft.extensions.logging.abstractions",
+    ],
+    compiler_options = [
+        "/features:InterceptorsNamespaces=Microsoft.AspNetCore.Http.Generated",
     ],
     out = "Checknote.Api.UnitTests",
     project_sdk = "web",

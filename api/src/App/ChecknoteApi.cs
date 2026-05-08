@@ -3,6 +3,7 @@ namespace Checknote.Api;
 using Checknote.Api.Logging;
 using Checknote.Api.Middleware;
 using Checknote.Common.Application;
+using Checknote.Common.Presentation.Endpoints;
 using Checknote.Modules.Todos.Composition.Todos;
 using Checknote.Modules.Users.Composition.Users;
 using System;
@@ -67,8 +68,7 @@ public static class ChecknoteApi
             };
         });
         MapApiRoutes(app);
-        app.MapTodosModule();
-        app.MapUsersModule();
+        app.MapEndpoints();
         MapStaticSite(app);
 
         return app;

@@ -31,10 +31,12 @@ package_group(
 package_group(
     name = "common_presentation_consumers",
     packages = [
+        "//api/src/App",
         "//api/src/Modules/Todos/Composition",
         "//api/src/Modules/Todos/Presentation",
         "//api/src/Modules/Users/Composition",
         "//api/src/Modules/Users/Presentation",
+        "//api/test/unit",
     ],
 )
 

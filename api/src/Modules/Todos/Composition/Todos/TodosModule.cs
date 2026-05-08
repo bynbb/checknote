@@ -7,7 +7,6 @@ using Checknote.Modules.Todos.Infrastructure.Database;
 using Checknote.Modules.Todos.Infrastructure.Todos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using TodosPresentation = Checknote.Modules.Todos.Presentation.AssemblyReference;
 
@@ -17,6 +16,8 @@ public static class TodosModule
 
     public static IServiceCollection AddTodosModule(this IServiceCollection services)
     {
+        services.AddEndpoints(TodosPresentation.Assembly);
+
         string connectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable) ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(connectionString))
@@ -34,10 +35,5 @@ public static class TodosModule
         }
 
         return services;
-    }
-
-    public static IEndpointRouteBuilder MapTodosModule(this IEndpointRouteBuilder endpoints)
-    {
-        return endpoints.MapEndpoints(TodosPresentation.Assembly);
     }
 }

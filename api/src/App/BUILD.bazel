@@ -24,6 +24,7 @@ checknote_csharp_library(
     deps = [
         ":logging",
         "//api/src/Common/Application:application",
+        "//api/src/Common/Presentation:presentation",
         "//api/src/Modules/Todos/Application:application",
         "//api/src/Modules/Todos/Composition:composition",
         "//api/src/Modules/Users/Application:application",

@@ -2,6 +2,7 @@ namespace Checknote.Api.Logging.Tests;
 
 using System;
 using System.Threading.Tasks;
+using Checknote.Api.UnitTests.Common.Presentation.Endpoints;
 using Checknote.Api.UnitTests.Modules.Todos.Application;
 using Checknote.Api.UnitTests.Support;
 using Checknote.Api.Logging;
@@ -39,6 +40,7 @@ internal static class Program
         TestAssert.Equal("web", SerilogRequestLogPolicy.GetArea("/"), "root area");
 
         await MediatRDispatchTests.Run();
+        await EndpointRegistrationExtensionsTests.Run();
 
         return 0;
     }

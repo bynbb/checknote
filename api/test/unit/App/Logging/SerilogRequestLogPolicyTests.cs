@@ -3,6 +3,7 @@ namespace Checknote.Api.Logging.Tests;
 using System;
 using System.Threading.Tasks;
 using Checknote.Api.UnitTests.Common.Presentation.Endpoints;
+using Checknote.Api.UnitTests.Modules.Database;
 using Checknote.Api.UnitTests.Modules.Todos.Application;
 using Checknote.Api.UnitTests.Support;
 using Checknote.Api.Logging;
@@ -41,6 +42,7 @@ internal static class Program
 
         await MediatRDispatchTests.Run();
         await EndpointRegistrationExtensionsTests.Run();
+        await SchemaBoundaryTests.Run();
 
         return 0;
     }

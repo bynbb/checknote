@@ -1,0 +1,19 @@
+<section class="confirmation-dialog">
+  <h2 class="confirmation-dialog__title">{{ data.title }}</h2>
+
+  <p class="confirmation-dialog__message">{{ data.message }}</p>
+
+  <div class="confirmation-dialog__actions">
+    <button class="confirmation-dialog__button" type="button" (click)="close(false)">
+      {{ data.cancelText }}
+    </button>
+    <button
+      class="confirmation-dialog__button confirmation-dialog__button--primary"
+      type="button"
+      [class.confirmation-dialog__button--danger]="data.tone === 'danger'"
+      (click)="close(true)"
+    >
+      {{ data.confirmText }}
+    </button>
+  </div>
+</section>

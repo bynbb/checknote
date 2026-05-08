@@ -19,6 +19,11 @@ for (const file of tsFiles) {
   for (const specifier of imports) {
     const target = resolveImport(file, specifier);
 
+    if (specifier.startsWith('@angular/material')) {
+      addViolation(file, '@angular/material', 'Checknote uses native CSS plus Angular CDK behavior primitives, not Angular Material.');
+      continue;
+    }
+
     if (specifier.startsWith('@angular/')) {
       validateAngularImport(file, from);
       continue;

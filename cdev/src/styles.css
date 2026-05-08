@@ -18,3 +18,7 @@ button,
 input {
   font: inherit;
 }
+
+.checknote-confirmation-dialog-pane {
+  font-family: inherit;
+}

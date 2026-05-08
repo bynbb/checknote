@@ -89,6 +89,15 @@ const cases = [
     includes: 'domain may not depend on Angular.',
   },
   {
+    name: 'rejects Angular Material imports',
+    files: {
+      'src/modules/todos/presentation/todos/todos-page.component.ts':
+        "import { MatButtonModule } from '@angular/material/button';\nexport const mat = MatButtonModule;\n",
+    },
+    status: 1,
+    includes: 'Checknote uses native CSS plus Angular CDK behavior primitives, not Angular Material.',
+  },
+  {
     name: 'rejects cross-module imports',
     files: {
       'src/modules/users/domain/users/user.ts': 'export interface User { readonly name: string; }\n',

@@ -40,11 +40,36 @@ internal static class MediatRDispatchTests
         TestAssert.Equal(2, todosResult.Value.Count, "GetTodosQuery todo count");
         TestAssert.Same(first, todosResult.Value.First(), "GetTodosQuery should return repository todos.");
 
-        Todo replacement = new(3, "Replace through CQRS", false);
-        Result saveResult = await sender.Send(new SaveTaskListCommand([replacement]));
+        Result saveResult = await sender.Send(new SaveTaskListCommand([
+            new SaveTaskListTodo(3, "Replace through CQRS", false),
+        ]));
         TestAssert.True(saveResult.IsSuccess, "SaveTaskListCommand should succeed.");
         TestAssert.Equal(1, todoRepository.SavedTodos.Count, "SaveTaskListCommand saved todo count");
-        TestAssert.Same(replacement, todoRepository.SavedTodos.Single(), "SaveTaskListCommand should save command todos.");
+        TestAssert.Equal(1, todoRepository.SaveCallCount, "SaveTaskListCommand should call the repository.");
+        Todo savedTodo = todoRepository.SavedTodos.Single();
+        TestAssert.Equal(3, savedTodo.Id, "SaveTaskListCommand saved todo id");
+        TestAssert.Equal("Replace through CQRS", savedTodo.Title, "SaveTaskListCommand saved todo title");
+        TestAssert.Equal(false, savedTodo.IsCompleted, "SaveTaskListCommand saved todo completion state");
+
+        Result invalidTitleResult = await sender.Send(new SaveTaskListCommand([
+            new SaveTaskListTodo(4, "   ", false),
+        ]));
+        TestAssert.True(invalidTitleResult.IsFailure, "SaveTaskListCommand should reject invalid command input.");
+        TestAssert.Equal("General.Validation", invalidTitleResult.Error.Code, "Invalid command error code");
+        TestAssert.True(invalidTitleResult.Error is ValidationError, "Invalid command should return a validation error.");
+        TestAssert.Equal(1, todoRepository.SaveCallCount, "Invalid command input should not call the repository.");
+
+        Result reservedTitleResult = await sender.Send(new SaveTaskListCommand([
+            new SaveTaskListTodo(5, "88888", false),
+        ]));
+        TestAssert.True(reservedTitleResult.IsFailure, "SaveTaskListCommand should reject invalid domain input.");
+        TestAssert.Equal("General.Validation", reservedTitleResult.Error.Code, "Invalid domain error code");
+        TestAssert.True(reservedTitleResult.Error is ValidationError, "Invalid domain input should return a validation error.");
+        TestAssert.Equal(1, todoRepository.SaveCallCount, "Invalid domain input should not call the repository.");
+
+        Result nullTaskListResult = await sender.Send(new SaveTaskListCommand(null));
+        TestAssert.True(nullTaskListResult.IsFailure, "SaveTaskListCommand should reject a null task list.");
+        TestAssert.Equal(1, todoRepository.SaveCallCount, "Null task list should not call the repository.");
 
         Result<User> userResult = await sender.Send(new GetCurrentUserQuery());
         TestAssert.True(userResult.IsSuccess, "GetCurrentUserQuery should succeed.");
@@ -61,12 +86,15 @@ internal static class MediatRDispatchTests
             SavedTodos = [];
         }
 
+        public int SaveCallCount { get; private set; }
+
         public IReadOnlyCollection<Todo> SavedTodos { get; private set; }
 
         public IReadOnlyCollection<Todo> GetTodos() => todos;
 
         public void SaveTodos(IReadOnlyCollection<Todo> todosToSave)
         {
+            SaveCallCount++;
             SavedTodos = todosToSave;
         }
     }

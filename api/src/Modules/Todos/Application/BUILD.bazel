@@ -8,6 +8,7 @@ checknote_csharp_library(
     deps = [
         "//api/src/Common/Application:application",
         "//api/src/Modules/Todos/Domain:domain",
+        "@paket.main//fluentvalidation",
         "@paket.main//mediatr",
         "@paket.main//mediatr.contracts",
     ],

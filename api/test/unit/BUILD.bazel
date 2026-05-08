@@ -15,6 +15,7 @@ checknote_csharp_binary(
         "//api/src/Modules/Todos/Domain:domain",
         "//api/src/Modules/Users/Application:application",
         "//api/src/Modules/Users/Domain:domain",
+        "@paket.main//fluentvalidation",
         "@paket.main//mediatr",
         "@paket.main//mediatr.contracts",
         "@paket.main//microsoft.extensions.dependencyinjection",

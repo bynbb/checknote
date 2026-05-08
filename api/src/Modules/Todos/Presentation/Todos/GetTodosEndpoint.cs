@@ -45,20 +45,9 @@ public sealed class SaveTaskListEndpoint : IEndpoint
                 ISender sender,
                 CancellationToken cancellationToken) =>
             {
-                Result<Todo>[] todoResults = request.Todos
-                    .Select(todo => new TodoRequest(todo.Id, todo.Title.Trim(), todo.Completed))
-                    .Where(todo => !string.IsNullOrWhiteSpace(todo.Title))
-                    .Select(todo => Todo.Create(todo.Id, todo.Title, todo.Completed))
+                SaveTaskListTodo[]? todos = request.Todos?
+                    .Select(todo => new SaveTaskListTodo(todo.Id, todo.Title, todo.Completed))
                     .ToArray();
-
-                ValidationError validationError = ValidationError.FromResults(todoResults);
-
-                if (validationError.Errors.Length > 0)
-                {
-                    return ApiResults.Problem(Result.Failure(validationError));
-                }
-
-                Todo[] todos = todoResults.Select(result => result.Value).ToArray();
 
                 Result result = await sender.Send(
                     new SaveTaskListCommand(todos),
@@ -79,6 +68,6 @@ public sealed record TodoResponse(long Id, string Title, bool Completed)
     }
 }
 
-public sealed record SaveTaskListRequest(IReadOnlyCollection<TodoRequest> Todos);
+public sealed record SaveTaskListRequest(IReadOnlyCollection<TodoRequest>? Todos);
 
-public sealed record TodoRequest(long Id, string Title, bool Completed);
+public sealed record TodoRequest(long Id, string? Title, bool Completed);

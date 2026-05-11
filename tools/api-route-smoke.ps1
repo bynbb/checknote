@@ -245,10 +245,14 @@ try {
         throw "Unexpected reserved todo response: status=$badStatus body=$badBodyText"
     }
 
-    $user = Invoke-WebRequest -Uri "$base/api/users/current" -UseBasicParsing -TimeoutSec 5
-
-    if ($user.StatusCode -ne 200 -or $user.Content -notmatch 'Ada Lovelace') {
-        throw "Unexpected /api/users/current response: $($user.Content)"
+    try {
+        Invoke-WebRequest -Uri "$base/api/users/current" -UseBasicParsing -TimeoutSec 5 | Out-Null
+        throw 'Expected /api/users/current to require authentication.'
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 401) {
+            throw
+        }
     }
 
     Stop-Process -Id $proc.Id -Force
@@ -276,7 +280,7 @@ try {
     Assert-OpenApiResponses -OpenApi $openApi -Path '/health' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos' -Method 'get' -StatusCodes @('200', '400')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -StatusCodes @('204', '400')
-    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/users/current' -Method 'get' -StatusCodes @('200', '400')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/users/current' -Method 'get' -StatusCodes @('200', '400', '401')
     Assert-OpenApiRequestBodyContent -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ContentType 'application/json'
     Assert-OpenApiTag -OpenApi $openApi -Path '/hello-world' -Method 'get' -ExpectedTag 'System'
     Assert-OpenApiTag -OpenApi $openApi -Path '/health' -Method 'get' -ExpectedTag 'System'

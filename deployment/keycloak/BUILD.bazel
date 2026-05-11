@@ -1,0 +1,9 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "keycloak_config_templates",
+    srcs = [
+        "README.md",
+        "keycloak.realm.template.json",
+    ],
+)

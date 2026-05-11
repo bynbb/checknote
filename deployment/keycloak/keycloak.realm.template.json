@@ -1,0 +1,51 @@
+{
+  "realm": "checknote",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyInitialCounter": 0,
+  "otpPolicyDigits": 6,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyPeriod": 30,
+  "clients": [
+    {
+      "clientId": "checknote-angular",
+      "name": "Checknote Angular",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://127.0.0.1:4200/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://127.0.0.1:4200",
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "smtpServer": {
+    "host": "__CHECKNOTE_SMTP_HOST__",
+    "port": "__CHECKNOTE_SMTP_PORT__",
+    "from": "__CHECKNOTE_SMTP_FROM__",
+    "fromDisplayName": "Checknote",
+    "auth": "true",
+    "user": "__CHECKNOTE_SMTP_USER__",
+    "password": "__CHECKNOTE_SMTP_PASSWORD__",
+    "starttls": "true",
+    "ssl": "false"
+  }
+}

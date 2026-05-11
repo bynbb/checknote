@@ -1,5 +1,6 @@
 namespace Checknote.Api;
 
+using Checknote.Api.Authentication;
 using Checknote.Api.Logging;
 using Checknote.Api.Middleware;
 using Checknote.Common.Application;
@@ -40,6 +41,7 @@ public static class ChecknoteApi
         builder.Services.AddProblemDetails();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddChecknoteAuthentication(builder.Configuration);
         builder.Services.AddApplication(
             TodosApplication.Assembly,
             UsersApplication.Assembly);
@@ -67,6 +69,8 @@ public static class ChecknoteApi
                 diagnosticContext.Set("ChecknoteArea", SerilogRequestLogPolicy.GetArea(httpContext.Request.Path));
             };
         });
+        app.UseAuthentication();
+        app.UseAuthorization();
         MapApiRoutes(app);
         app.MapEndpoints();
         MapStaticSite(app);

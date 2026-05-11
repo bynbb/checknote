@@ -2,6 +2,7 @@ namespace Checknote.Api.Logging.Tests;
 
 using System;
 using System.Threading.Tasks;
+using Checknote.Api.UnitTests.App.Authentication;
 using Checknote.Api.UnitTests.Common.Presentation.Endpoints;
 using Checknote.Api.UnitTests.Modules.Database;
 using Checknote.Api.UnitTests.Modules.Todos.Application;
@@ -41,6 +42,7 @@ internal static class Program
         TestAssert.Equal("web", SerilogRequestLogPolicy.GetArea("/"), "root area");
 
         await MediatRDispatchTests.Run();
+        JwtBearerConfigureOptionsTests.Run();
         await EndpointRegistrationExtensionsTests.Run();
         await SchemaBoundaryTests.Run();
 

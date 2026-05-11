@@ -9,6 +9,7 @@ checknote_csharp_binary(
     srcs = glob(["**/*.cs"]),
     deps = [
         "//api/src/App:logging",
+        "//api/src/App:api_lib",
         "//api/src/Common/Application:application",
         "//api/src/Common/Domain:domain",
         "//api/src/Common/Presentation:presentation",
@@ -21,6 +22,7 @@ checknote_csharp_binary(
         "@paket.main//fluentvalidation",
         "@paket.main//mediatr",
         "@paket.main//mediatr.contracts",
+        "@paket.main//microsoft.aspnetcore.authentication.jwtbearer",
         "@paket.main//microsoft.entityframeworkcore",
         "@paket.main//microsoft.entityframeworkcore.relational",
         "@paket.main//microsoft.entityframeworkcore.sqlserver",
@@ -28,6 +30,7 @@ checknote_csharp_binary(
         "@paket.main//microsoft.extensions.dependencyinjection.abstractions",
         "@paket.main//microsoft.extensions.logging",
         "@paket.main//microsoft.extensions.logging.abstractions",
+        "@paket.main//microsoft.identitymodel.tokens",
     ],
     compiler_options = [
         "/features:InterceptorsNamespaces=Microsoft.AspNetCore.Http.Generated",

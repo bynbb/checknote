@@ -27,7 +27,9 @@ public sealed class GetCurrentUserEndpoint : IEndpoint
         })
         .WithName("GetCurrentUser")
         .WithTags("Users")
+        .RequireAuthorization()
         .Produces<UserResponse>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

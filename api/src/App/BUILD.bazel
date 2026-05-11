@@ -29,8 +29,10 @@ checknote_csharp_library(
         "//api/src/Modules/Todos/Composition:composition",
         "//api/src/Modules/Users/Application:application",
         "//api/src/Modules/Users/Composition:composition",
+        "@paket.main//microsoft.aspnetcore.authentication.jwtbearer",
         "@paket.main//microsoft.extensions.dependencyinjection.abstractions",
         "@paket.main//microsoft.extensions.logging.abstractions",
+        "@paket.main//microsoft.identitymodel.tokens",
         "@paket.main//serilog",
         "@paket.main//serilog.aspnetcore",
         "@paket.main//serilog.extensions.hosting",
@@ -53,7 +55,10 @@ checknote_csharp_library(
 checknote_csharp_binary(
     name = "checknote_api",
     srcs = ["Program.cs"],
-    appsetting_files = ["appsettings.json"],
+    appsetting_files = [
+        "appsettings.Development.json",
+        "appsettings.json",
+    ],
     deps = [":api_lib"],
     project_sdk = "web",
     target_frameworks = ["net9.0"],

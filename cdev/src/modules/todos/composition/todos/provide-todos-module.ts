@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { makeEnvironmentProviders } from '@angular/core';
 import {
   AddTodoCommandHandler,
@@ -10,9 +11,9 @@ import {
 } from '@cdev/modules/todos/application';
 import {
   DateNowTodoIdGenerator,
-  HttpTodoRepository,
 } from '@cdev/modules/todos/infrastructure';
 import { TodosPageFacade } from '@cdev/modules/todos/presentation';
+import { AngularHttpTodoRepository } from './angular-http-todo-repository';
 import {
   ADD_TODO_HANDLER,
   CLEAR_COMPLETED_HANDLER,
@@ -25,10 +26,14 @@ import {
 
 export function provideTodosModule() {
   return makeEnvironmentProviders([
-    { provide: HttpTodoRepository, useFactory: () => new HttpTodoRepository() },
+    {
+      provide: AngularHttpTodoRepository,
+      useFactory: (http: HttpClient) => new AngularHttpTodoRepository(http),
+      deps: [HttpClient],
+    },
     { provide: DateNowTodoIdGenerator, useFactory: () => new DateNowTodoIdGenerator() },
     TodosPageFacade,
-    { provide: TODO_REPOSITORY, useExisting: HttpTodoRepository },
+    { provide: TODO_REPOSITORY, useExisting: AngularHttpTodoRepository },
     { provide: TODO_ID_GENERATOR, useExisting: DateNowTodoIdGenerator },
     {
       provide: GET_TODOS_HANDLER,

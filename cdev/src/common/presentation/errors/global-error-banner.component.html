@@ -1,9 +1,10 @@
 @if (errors.current(); as error) {
-  <section class="error-banner" role="alert" aria-live="assertive">
-    <div>
+  <section class="error-banner" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="error-copy">
+      <p class="error-kicker">Action needed</p>
       <p class="error-code">{{ error.code }}</p>
       <p class="error-message">{{ error.message }}</p>
     </div>
-    <button type="button" (click)="errors.clear()">Dismiss</button>
+    <button type="button" aria-label="Dismiss error message" (click)="errors.clear()">Dismiss</button>
   </section>
 }

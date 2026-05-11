@@ -3,45 +3,29 @@ import { ApplicationError, ApplicationErrorType } from '@cdev/common/domain';
 interface ProblemDetails {
   readonly title?: unknown;
   readonly detail?: unknown;
-  readonly status?: unknown;
   readonly errors?: unknown;
 }
 
-export async function ensureOk(response: Response, fallbackMessage: string): Promise<void> {
-  if (response.ok) {
-    return;
-  }
-
-  throw await createApplicationError(response, fallbackMessage);
-}
-
-async function createApplicationError(response: Response, fallbackMessage: string): Promise<ApplicationError> {
-  const problemDetails = await readProblemDetails(response);
+export function createApplicationErrorFromHttpResponse(
+  status: number,
+  body: unknown,
+  fallbackMessage = 'API request failed',
+): ApplicationError {
+  const problemDetails = readProblemDetails(body);
   const nestedError = readFirstNestedError(problemDetails?.errors);
-  const code = nestedError?.code ?? readText(problemDetails?.title) ?? `Http.${response.status}`;
-  const message = nestedError?.message ?? readText(problemDetails?.detail) ?? `${fallbackMessage}: ${response.status}`;
+  const code = nestedError?.code ?? readText(problemDetails?.title) ?? `Http.${status}`;
+  const message = nestedError?.message ?? readText(problemDetails?.detail) ?? `${fallbackMessage}: ${status}`;
 
   return new ApplicationError({
     code,
     message,
-    type: mapStatusToErrorType(response.status),
-    cause: problemDetails,
+    type: mapStatusToErrorType(status),
+    cause: body,
   });
 }
 
-async function readProblemDetails(response: Response): Promise<ProblemDetails | null> {
-  const contentType = response.headers.get('content-type') ?? '';
-
-  if (!contentType.includes('application/problem+json') && !contentType.includes('application/json')) {
-    return null;
-  }
-
-  try {
-    const body = (await response.json()) as unknown;
-    return body && typeof body === 'object' ? (body as ProblemDetails) : null;
-  } catch {
-    return null;
-  }
+function readProblemDetails(value: unknown): ProblemDetails | null {
+  return value && typeof value === 'object' ? value as ProblemDetails : null;
 }
 
 function readText(value: unknown): string | null {

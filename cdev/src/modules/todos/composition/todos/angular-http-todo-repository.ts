@@ -1,6 +1,7 @@
-import { ensureOk } from '@cdev/common/infrastructure';
+import { HttpClient } from '@angular/common/http';
 import { TodoRepository } from '@cdev/modules/todos/application';
 import { Todo } from '@cdev/modules/todos/domain';
+import { firstValueFrom } from 'rxjs';
 
 interface ApiTodo {
   readonly id: number;
@@ -12,15 +13,13 @@ interface SaveTaskListRequest {
   readonly todos: readonly ApiTodo[];
 }
 
-export class HttpTodoRepository implements TodoRepository {
+export class AngularHttpTodoRepository implements TodoRepository {
   private readonly route = '/api/todos';
 
+  constructor(private readonly http: HttpClient) {}
+
   async getAll(): Promise<Todo[]> {
-    const response = await fetch(this.route);
-
-    await ensureOk(response, 'Could not load todos');
-
-    const todos = (await response.json()) as unknown;
+    const todos = await firstValueFrom(this.http.get<unknown>(this.route));
     return Array.isArray(todos) ? todos.filter(isApiTodo) : [];
   }
 
@@ -29,15 +28,7 @@ export class HttpTodoRepository implements TodoRepository {
       todos,
     };
 
-    const response = await fetch(`${this.route}/task-list`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    await ensureOk(response, 'Could not save todos');
+    await firstValueFrom(this.http.put<void>(`${this.route}/task-list`, request));
   }
 }
 

@@ -8,13 +8,25 @@
   gap: 16px;
   background: #fff7f5;
   border-bottom: 1px solid #efc5bf;
+  box-shadow: 0 8px 22px rgb(103 35 33 / 10%);
   color: #672321;
   padding: 12px 18px;
 }
 
+.error-copy {
+  min-width: 0;
+}
+
+.error-kicker,
 .error-code,
 .error-message {
   margin: 0;
+}
+
+.error-kicker {
+  color: #8c3934;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .error-code {
@@ -36,6 +48,11 @@ button {
   font-weight: 700;
   min-height: 40px;
   padding: 0 14px;
+}
+
+button:focus-visible {
+  outline: 3px solid #e7a39b;
+  outline-offset: 2px;
 }
 
 @media (max-width: 560px) {

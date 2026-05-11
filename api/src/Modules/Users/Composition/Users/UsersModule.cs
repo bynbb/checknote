@@ -11,7 +11,7 @@ public static class UsersModule
     public static IServiceCollection AddUsersModule(this IServiceCollection services)
     {
         services.AddEndpoints(UsersPresentation.Assembly);
-        services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+        services.AddScoped<ICurrentUserProvider, AuthenticatedCurrentUserProvider>();
 
         return services;
     }

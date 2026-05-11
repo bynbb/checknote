@@ -27,7 +27,7 @@ internal static class MediatRDispatchTests
 
         ServiceCollection services = new();
         services.AddSingleton<ITodoRepository>(todoRepository);
-        services.AddSingleton<IUserRepository>(new FakeUserRepository(currentUser));
+        services.AddSingleton<ICurrentUserProvider>(new FakeCurrentUserProvider(currentUser));
         services.AddApplication(
             Checknote.Modules.Todos.Application.AssemblyReference.Assembly,
             Checknote.Modules.Users.Application.AssemblyReference.Assembly);
@@ -73,7 +73,7 @@ internal static class MediatRDispatchTests
 
         Result<User> userResult = await sender.Send(new GetCurrentUserQuery());
         TestAssert.True(userResult.IsSuccess, "GetCurrentUserQuery should succeed.");
-        TestAssert.Same(currentUser, userResult.Value, "GetCurrentUserQuery should return repository user.");
+        TestAssert.Same(currentUser, userResult.Value, "GetCurrentUserQuery should return current user.");
     }
 
     private sealed class FakeTodoRepository : ITodoRepository
@@ -99,15 +99,15 @@ internal static class MediatRDispatchTests
         }
     }
 
-    private sealed class FakeUserRepository : IUserRepository
+    private sealed class FakeCurrentUserProvider : ICurrentUserProvider
     {
         private readonly User currentUser;
 
-        public FakeUserRepository(User currentUser)
+        public FakeCurrentUserProvider(User currentUser)
         {
             this.currentUser = currentUser;
         }
 
-        public User GetCurrentUser() => currentUser;
+        public Result<User> GetCurrentUser() => Result.Success(currentUser);
     }
 }

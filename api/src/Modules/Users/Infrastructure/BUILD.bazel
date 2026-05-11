@@ -13,6 +13,7 @@ checknote_csharp_library(
         "@paket.main//microsoft.entityframeworkcore.sqlserver",
     ],
     out = "Checknote.Modules.Users.Infrastructure",
+    project_sdk = "web",
     target_frameworks = ["net9.0"],
     visibility = ["//api:users_infrastructure_consumers"],
 )

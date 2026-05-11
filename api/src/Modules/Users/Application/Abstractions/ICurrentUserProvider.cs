@@ -1,8 +1,9 @@
 namespace Checknote.Modules.Users.Application.Abstractions;
 
+using Checknote.Common.Domain;
 using Checknote.Modules.Users.Domain.Users;
 
-public interface IUserRepository
+public interface ICurrentUserProvider
 {
-    User GetCurrentUser();
+    Result<User> GetCurrentUser();
 }

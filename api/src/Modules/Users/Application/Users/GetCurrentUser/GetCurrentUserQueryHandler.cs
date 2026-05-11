@@ -9,15 +9,15 @@ using Checknote.Modules.Users.Domain.Users;
 
 public sealed class GetCurrentUserQueryHandler : IQueryHandler<GetCurrentUserQuery, User>
 {
-    private readonly IUserRepository userRepository;
+    private readonly ICurrentUserProvider currentUserProvider;
 
-    public GetCurrentUserQueryHandler(IUserRepository userRepository)
+    public GetCurrentUserQueryHandler(ICurrentUserProvider currentUserProvider)
     {
-        this.userRepository = userRepository;
+        this.currentUserProvider = currentUserProvider;
     }
 
     public Task<Result<User>> Handle(GetCurrentUserQuery query, CancellationToken cancellationToken)
     {
-        return Task.FromResult(Result.Success(userRepository.GetCurrentUser()));
+        return Task.FromResult(currentUserProvider.GetCurrentUser());
     }
 }

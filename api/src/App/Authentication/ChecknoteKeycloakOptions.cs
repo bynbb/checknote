@@ -4,6 +4,8 @@ public sealed class ChecknoteKeycloakOptions
 {
     public const string ConfigurationSectionName = "Keycloak";
 
+    public string AuthServerUrl { get; set; } = string.Empty;
+
     public string Realm { get; set; } = string.Empty;
 
     public string PublicClientId { get; set; } = string.Empty;

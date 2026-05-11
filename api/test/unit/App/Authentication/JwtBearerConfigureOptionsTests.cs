@@ -52,6 +52,13 @@ internal static class JwtBearerConfigureOptionsTests
             authenticationOptions.DefaultChallengeScheme,
             "Default challenge scheme");
         TestAssert.Equal("account", configuredOptions.Audience, "Configured JWT bearer audience");
+
+        ChecknoteKeycloakOptions keycloakOptions =
+            serviceProvider.GetRequiredService<IOptions<ChecknoteKeycloakOptions>>().Value;
+
+        TestAssert.Equal("http://127.0.0.1:8080", keycloakOptions.AuthServerUrl, "Keycloak auth server URL");
+        TestAssert.Equal("checknote", keycloakOptions.Realm, "Keycloak realm");
+        TestAssert.Equal("checknote-angular", keycloakOptions.PublicClientId, "Keycloak public client id");
     }
 
     private static IConfiguration CreateConfiguration()
@@ -64,6 +71,7 @@ internal static class JwtBearerConfigureOptionsTests
             ["Authentication:RequireHttpsMetadata"] = "false",
             ["Authentication:TokenValidationParameters:ValidIssuers:0"] =
                 "http://127.0.0.1:8080/realms/checknote",
+            ["Keycloak:AuthServerUrl"] = "http://127.0.0.1:8080",
             ["Keycloak:Realm"] = "checknote",
             ["Keycloak:PublicClientId"] = "checknote-angular",
             ["Keycloak:HealthUrl"] = "http://127.0.0.1:9000/health/",

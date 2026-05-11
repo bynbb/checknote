@@ -3,8 +3,12 @@ genrule(
     srcs = [
         "//cdev:app_sources",
         "angular/angular-testing-harness.spec.ts",
+        "angular/auth-token-interceptor.spec.ts",
         "angular/http-error-interceptor.spec.ts",
         "angular/http-todo-repository.spec.ts",
+        "angular/http-user-repository.spec.ts",
+        "angular/keycloak-auth-client.spec.ts",
+        "angular/user-summary-facade.spec.ts",
     ],
     outs = ["cdev-angular-unit-tests.stamp"],
     cmd = """

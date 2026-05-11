@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;
 using TodosApplication = Checknote.Modules.Todos.Application.AssemblyReference;
@@ -120,6 +121,14 @@ public static class ChecknoteApi
             .WithName("Health")
             .WithTags("System")
             .Produces<HealthResponse>(StatusCodes.Status200OK);
+
+        app.MapGet(
+                "/api/auth/config",
+                (IOptions<ChecknoteKeycloakOptions> options) =>
+                    Results.Ok(AuthConfigResponse.From(options.Value)))
+            .WithName("GetAuthConfig")
+            .WithTags("Auth")
+            .Produces<AuthConfigResponse>(StatusCodes.Status200OK);
     }
 
     private static void MapStaticSite(WebApplication app)
@@ -219,3 +228,24 @@ public static class ChecknoteApi
 }
 
 public sealed record HealthResponse(string Service, string Status);
+
+public sealed record AuthConfigResponse(
+    bool Enabled,
+    string AuthServerUrl,
+    string Realm,
+    string ClientId)
+{
+    public static AuthConfigResponse From(ChecknoteKeycloakOptions options)
+    {
+        bool enabled =
+            !string.IsNullOrWhiteSpace(options.AuthServerUrl) &&
+            !string.IsNullOrWhiteSpace(options.Realm) &&
+            !string.IsNullOrWhiteSpace(options.PublicClientId);
+
+        return new AuthConfigResponse(
+            enabled,
+            options.AuthServerUrl,
+            options.Realm,
+            options.PublicClientId);
+    }
+}

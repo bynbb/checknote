@@ -14,6 +14,17 @@
   z-index: 1;
 }
 
+.auth-muted,
+.user-copy {
+  min-width: 0;
+}
+
+.auth-muted {
+  color: #63718a;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .avatar {
   display: grid;
   width: 34px;
@@ -32,6 +43,26 @@ small {
 
 small {
   color: #63718a;
+}
+
+button {
+  min-height: 34px;
+  border: 1px solid #b9c5d8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #234b78;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 12px;
+}
+
+button:hover {
+  background: #f4f7fb;
+}
+
+button:focus-visible {
+  outline: 3px solid #9db8df;
+  outline-offset: 2px;
 }
 
 @media (max-width: 560px) {

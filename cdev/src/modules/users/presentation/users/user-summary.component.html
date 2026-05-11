@@ -1,9 +1,25 @@
 <section class="user-summary" aria-label="Current user">
-  @if (facade.user(); as user) {
-    <span class="avatar" aria-hidden="true">{{ user.name.charAt(0) }}</span>
-    <span>
-      <strong>{{ user.name }}</strong>
-      <small>{{ user.email }}</small>
-    </span>
+  @switch (facade.auth().status) {
+    @case ('loading') {
+      <span class="auth-muted">Checking session</span>
+    }
+    @case ('unavailable') {
+      <span class="auth-muted">Sign in unavailable</span>
+    }
+    @case ('anonymous') {
+      <button type="button" (click)="facade.signIn()">Sign in</button>
+    }
+    @case ('authenticated') {
+      <span class="avatar" aria-hidden="true">{{ facade.displayName().charAt(0) }}</span>
+      <span class="user-copy">
+        <strong>{{ facade.displayName() }}</strong>
+        @if (facade.loadingUser()) {
+          <small>Loading profile</small>
+        } @else if (facade.displayEmail()) {
+          <small>{{ facade.displayEmail() }}</small>
+        }
+      </span>
+      <button type="button" (click)="facade.signOut()">Sign out</button>
+    }
   }
 </section>

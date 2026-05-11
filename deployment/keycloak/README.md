@@ -13,6 +13,12 @@ The production runtime is external to the Checknote build: Keycloak runs directl
 - Local Keycloak metadata: `http://127.0.0.1:8080/realms/checknote/.well-known/openid-configuration`
 - Local Keycloak health: `http://127.0.0.1:9000/health/`
 
+## Browser Login Runtime
+
+The Angular browser flow needs a browser-reachable Keycloak base URL through `Keycloak__AuthServerUrl`.
+
+The API may validate tokens against a server-local metadata URL such as `http://127.0.0.1:8080/...`, but the Angular app cannot use a server-local URL from a user's browser. Production login needs Keycloak exposed through an appropriate public host or IIS reverse proxy before the sign-in button can complete the browser redirect flow.
+
 ## Public Repo Boundary
 
 The repo can contain Keycloak realm templates, client names, local development URLs, API JWT validation code, tests, and docs.

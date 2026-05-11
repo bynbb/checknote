@@ -27,6 +27,7 @@ public static class AuthenticationExtensions
             IConfigurationSection section =
                 configuration.GetSection(ChecknoteKeycloakOptions.ConfigurationSectionName);
 
+            options.AuthServerUrl = section["AuthServerUrl"] ?? string.Empty;
             options.Realm = section["Realm"] ?? string.Empty;
             options.PublicClientId = section["PublicClientId"] ?? string.Empty;
             options.HealthUrl = section["HealthUrl"] ?? string.Empty;

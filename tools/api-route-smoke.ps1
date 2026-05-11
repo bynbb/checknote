@@ -225,6 +225,12 @@ try {
         throw "Unexpected /api/todos response: $($todos.Content)"
     }
 
+    $authConfig = Invoke-WebRequest -Uri "$base/api/auth/config" -UseBasicParsing -TimeoutSec 5
+
+    if ($authConfig.StatusCode -ne 200 -or $authConfig.Content -notmatch 'checknote-angular') {
+        throw "Unexpected /api/auth/config response: $($authConfig.Content)"
+    }
+
     $badBody = @{
         todos = @(
             @{
@@ -278,12 +284,14 @@ try {
     $openApi = $swaggerJson.Content | ConvertFrom-Json
     Assert-OpenApiResponses -OpenApi $openApi -Path '/hello-world' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/health' -Method 'get' -StatusCodes @('200')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/auth/config' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos' -Method 'get' -StatusCodes @('200', '400')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -StatusCodes @('204', '400')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/users/current' -Method 'get' -StatusCodes @('200', '400', '401')
     Assert-OpenApiRequestBodyContent -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ContentType 'application/json'
     Assert-OpenApiTag -OpenApi $openApi -Path '/hello-world' -Method 'get' -ExpectedTag 'System'
     Assert-OpenApiTag -OpenApi $openApi -Path '/health' -Method 'get' -ExpectedTag 'System'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/api/auth/config' -Method 'get' -ExpectedTag 'Auth'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos' -Method 'get' -ExpectedTag 'Todos'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ExpectedTag 'Todos'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/users/current' -Method 'get' -ExpectedTag 'Users'

@@ -440,6 +440,7 @@ jobs:
           CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS: ${{ vars.CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS }}
           CHECKNOTE_AUTHENTICATION_VALID_ISSUER: ${{ vars.CHECKNOTE_AUTHENTICATION_VALID_ISSUER }}
           CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA: ${{ vars.CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA }}
+          CHECKNOTE_KEYCLOAK_AUTH_SERVER_URL: ${{ vars.CHECKNOTE_KEYCLOAK_AUTH_SERVER_URL }}
           CHECKNOTE_KEYCLOAK_REALM: ${{ vars.CHECKNOTE_KEYCLOAK_REALM }}
           CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID: ${{ vars.CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID }}
           CHECKNOTE_KEYCLOAK_HEALTH_URL: ${{ vars.CHECKNOTE_KEYCLOAK_HEALTH_URL }}
@@ -482,6 +483,7 @@ jobs:
           $authenticationMetadataAddressB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS
           $authenticationValidIssuerB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_VALID_ISSUER
           $authenticationRequireHttpsMetadataB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA
+          $keycloakAuthServerUrlB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_AUTH_SERVER_URL
           $keycloakRealmB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_REALM
           $keycloakPublicClientIdB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID
           $keycloakHealthUrlB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_HEALTH_URL
@@ -490,6 +492,7 @@ jobs:
             $authenticationMetadataAddressB64,
             $authenticationValidIssuerB64,
             $authenticationRequireHttpsMetadataB64,
+            $keycloakAuthServerUrlB64,
             $keycloakRealmB64,
             $keycloakPublicClientIdB64,
             $keycloakHealthUrlB64
@@ -514,6 +517,7 @@ jobs:
             [string] $AuthenticationMetadataAddressB64 = '',
             [string] $AuthenticationValidIssuerB64 = '',
             [string] $AuthenticationRequireHttpsMetadataB64 = '',
+            [string] $KeycloakAuthServerUrlB64 = '',
             [string] $KeycloakRealmB64 = '',
             [string] $KeycloakPublicClientIdB64 = '',
             [string] $KeycloakHealthUrlB64 = ''
@@ -600,6 +604,10 @@ jobs:
           if (![string]::IsNullOrWhiteSpace($authenticationRequireHttpsMetadata)) {
             Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Authentication__RequireHttpsMetadata' -Value $authenticationRequireHttpsMetadata
           }
+          $keycloakAuthServerUrl = Get-DecodedValueOrEmpty $KeycloakAuthServerUrlB64
+          if (![string]::IsNullOrWhiteSpace($keycloakAuthServerUrl)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Keycloak__AuthServerUrl' -Value $keycloakAuthServerUrl
+          }
           $keycloakRealm = Get-DecodedValueOrEmpty $KeycloakRealmB64
           if (![string]::IsNullOrWhiteSpace($keycloakRealm)) {
             Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Keycloak__Realm' -Value $keycloakRealm
@@ -625,7 +633,7 @@ jobs:
           '@
           Set-Content -LiteralPath publish-site.ps1 -Value $publishScript -Encoding UTF8
           scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT publish-site.ps1 "${remote}:$remotePublishScriptPath"
-          $publishCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $remotePublishScriptPath + '" -Site "' + $env:WEB_SERVER_REMOTE_PATH + '" -Stage "' + $remoteDeployPath + '" -ConnectionStringB64 "' + $connectionStringB64 + '" -SeqServerUrlB64 "' + $seqServerUrlB64 + '" -SeqApiKeyB64 "' + $seqApiKeyB64 + '" -AuthenticationAudienceB64 "' + $authenticationAudienceB64 + '" -AuthenticationMetadataAddressB64 "' + $authenticationMetadataAddressB64 + '" -AuthenticationValidIssuerB64 "' + $authenticationValidIssuerB64 + '" -AuthenticationRequireHttpsMetadataB64 "' + $authenticationRequireHttpsMetadataB64 + '" -KeycloakRealmB64 "' + $keycloakRealmB64 + '" -KeycloakPublicClientIdB64 "' + $keycloakPublicClientIdB64 + '" -KeycloakHealthUrlB64 "' + $keycloakHealthUrlB64 + '"'
+          $publishCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $remotePublishScriptPath + '" -Site "' + $env:WEB_SERVER_REMOTE_PATH + '" -Stage "' + $remoteDeployPath + '" -ConnectionStringB64 "' + $connectionStringB64 + '" -SeqServerUrlB64 "' + $seqServerUrlB64 + '" -SeqApiKeyB64 "' + $seqApiKeyB64 + '" -AuthenticationAudienceB64 "' + $authenticationAudienceB64 + '" -AuthenticationMetadataAddressB64 "' + $authenticationMetadataAddressB64 + '" -AuthenticationValidIssuerB64 "' + $authenticationValidIssuerB64 + '" -AuthenticationRequireHttpsMetadataB64 "' + $authenticationRequireHttpsMetadataB64 + '" -KeycloakAuthServerUrlB64 "' + $keycloakAuthServerUrlB64 + '" -KeycloakRealmB64 "' + $keycloakRealmB64 + '" -KeycloakPublicClientIdB64 "' + $keycloakPublicClientIdB64 + '" -KeycloakHealthUrlB64 "' + $keycloakHealthUrlB64 + '"'
           Write-Host "::add-mask::$publishCommand"
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote $publishCommand
 
@@ -702,6 +710,7 @@ jobs:
           CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS: ${{ vars.CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS }}
           CHECKNOTE_AUTHENTICATION_VALID_ISSUER: ${{ vars.CHECKNOTE_AUTHENTICATION_VALID_ISSUER }}
           CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA: ${{ vars.CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA }}
+          CHECKNOTE_KEYCLOAK_AUTH_SERVER_URL: ${{ vars.CHECKNOTE_KEYCLOAK_AUTH_SERVER_URL }}
           CHECKNOTE_KEYCLOAK_REALM: ${{ vars.CHECKNOTE_KEYCLOAK_REALM }}
           CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID: ${{ vars.CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID }}
           CHECKNOTE_KEYCLOAK_HEALTH_URL: ${{ vars.CHECKNOTE_KEYCLOAK_HEALTH_URL }}
@@ -733,6 +742,7 @@ jobs:
             'Authentication__MetadataAddress' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS
             'Authentication__TokenValidationParameters__ValidIssuers__0' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_VALID_ISSUER
             'Authentication__RequireHttpsMetadata' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA
+            'Keycloak__AuthServerUrl' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_AUTH_SERVER_URL
             'Keycloak__Realm' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_REALM
             'Keycloak__PublicClientId' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID
             'Keycloak__HealthUrl' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_HEALTH_URL

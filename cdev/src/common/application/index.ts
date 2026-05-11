@@ -1,3 +1,4 @@
+export type { AuthClient, AuthSession, AuthStatus } from './auth/auth-client';
 export type { ConfirmationDialog, ConfirmationRequest } from './confirmations/confirmation-dialog';
 export type { Command } from './messaging/command';
 export type { CommandHandler } from './messaging/command-handler';

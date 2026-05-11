@@ -436,6 +436,13 @@ jobs:
           CHECKNOTE_DATABASE_CONNECTION_STRING: ${{ secrets.CHECKNOTE_DATABASE_CONNECTION_STRING }}
           CHECKNOTE_SEQ_SERVER_URL: ${{ secrets.CHECKNOTE_SEQ_SERVER_URL }}
           CHECKNOTE_SEQ_API_KEY: ${{ secrets.CHECKNOTE_SEQ_API_KEY }}
+          CHECKNOTE_AUTHENTICATION_AUDIENCE: ${{ vars.CHECKNOTE_AUTHENTICATION_AUDIENCE }}
+          CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS: ${{ vars.CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS }}
+          CHECKNOTE_AUTHENTICATION_VALID_ISSUER: ${{ vars.CHECKNOTE_AUTHENTICATION_VALID_ISSUER }}
+          CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA: ${{ vars.CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA }}
+          CHECKNOTE_KEYCLOAK_REALM: ${{ vars.CHECKNOTE_KEYCLOAK_REALM }}
+          CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID: ${{ vars.CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID }}
+          CHECKNOTE_KEYCLOAK_HEALTH_URL: ${{ vars.CHECKNOTE_KEYCLOAK_HEALTH_URL }}
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -461,6 +468,36 @@ jobs:
             $seqApiKeyB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:CHECKNOTE_SEQ_API_KEY))
             Write-Host "::add-mask::$seqApiKeyB64"
           }
+          function Convert-ToBase64OrEmpty {
+            param([string] $Value)
+
+            if ([string]::IsNullOrWhiteSpace($Value)) {
+              return ''
+            }
+
+            return [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Value))
+          }
+
+          $authenticationAudienceB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_AUDIENCE
+          $authenticationMetadataAddressB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS
+          $authenticationValidIssuerB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_VALID_ISSUER
+          $authenticationRequireHttpsMetadataB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA
+          $keycloakRealmB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_REALM
+          $keycloakPublicClientIdB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID
+          $keycloakHealthUrlB64 = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_HEALTH_URL
+          foreach ($encodedAuthValue in @(
+            $authenticationAudienceB64,
+            $authenticationMetadataAddressB64,
+            $authenticationValidIssuerB64,
+            $authenticationRequireHttpsMetadataB64,
+            $keycloakRealmB64,
+            $keycloakPublicClientIdB64,
+            $keycloakHealthUrlB64
+          )) {
+            if (![string]::IsNullOrWhiteSpace($encodedAuthValue)) {
+              Write-Host "::add-mask::$encodedAuthValue"
+            }
+          }
           $remotePublishScriptPath = "$remoteDeployPath/publish-site.ps1"
           Write-Host "::add-mask::$remotePublishScriptPath"
           $publishScript = @'
@@ -472,7 +509,14 @@ jobs:
             [Parameter(Mandatory = $true)]
             [string] $ConnectionStringB64,
             [string] $SeqServerUrlB64 = '',
-            [string] $SeqApiKeyB64 = ''
+            [string] $SeqApiKeyB64 = '',
+            [string] $AuthenticationAudienceB64 = '',
+            [string] $AuthenticationMetadataAddressB64 = '',
+            [string] $AuthenticationValidIssuerB64 = '',
+            [string] $AuthenticationRequireHttpsMetadataB64 = '',
+            [string] $KeycloakRealmB64 = '',
+            [string] $KeycloakPublicClientIdB64 = '',
+            [string] $KeycloakHealthUrlB64 = ''
           )
 
           $ErrorActionPreference = 'Stop'
@@ -493,6 +537,16 @@ jobs:
 
             $variable.SetAttribute('name', $Name)
             $variable.SetAttribute('value', $Value)
+          }
+
+          function Get-DecodedValueOrEmpty {
+            param([string] $ValueB64)
+
+            if ([string]::IsNullOrWhiteSpace($ValueB64)) {
+              return ''
+            }
+
+            return [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($ValueB64))
           }
 
           $expanded = Join-Path $Stage 'site'
@@ -530,6 +584,35 @@ jobs:
             Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'CHECKNOTE_SEQ_API_KEY' -Value $seqApiKey
           }
 
+          $authenticationAudience = Get-DecodedValueOrEmpty $AuthenticationAudienceB64
+          if (![string]::IsNullOrWhiteSpace($authenticationAudience)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Authentication__Audience' -Value $authenticationAudience
+          }
+          $authenticationMetadataAddress = Get-DecodedValueOrEmpty $AuthenticationMetadataAddressB64
+          if (![string]::IsNullOrWhiteSpace($authenticationMetadataAddress)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Authentication__MetadataAddress' -Value $authenticationMetadataAddress
+          }
+          $authenticationValidIssuer = Get-DecodedValueOrEmpty $AuthenticationValidIssuerB64
+          if (![string]::IsNullOrWhiteSpace($authenticationValidIssuer)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Authentication__TokenValidationParameters__ValidIssuers__0' -Value $authenticationValidIssuer
+          }
+          $authenticationRequireHttpsMetadata = Get-DecodedValueOrEmpty $AuthenticationRequireHttpsMetadataB64
+          if (![string]::IsNullOrWhiteSpace($authenticationRequireHttpsMetadata)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Authentication__RequireHttpsMetadata' -Value $authenticationRequireHttpsMetadata
+          }
+          $keycloakRealm = Get-DecodedValueOrEmpty $KeycloakRealmB64
+          if (![string]::IsNullOrWhiteSpace($keycloakRealm)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Keycloak__Realm' -Value $keycloakRealm
+          }
+          $keycloakPublicClientId = Get-DecodedValueOrEmpty $KeycloakPublicClientIdB64
+          if (![string]::IsNullOrWhiteSpace($keycloakPublicClientId)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Keycloak__PublicClientId' -Value $keycloakPublicClientId
+          }
+          $keycloakHealthUrl = Get-DecodedValueOrEmpty $KeycloakHealthUrlB64
+          if (![string]::IsNullOrWhiteSpace($keycloakHealthUrl)) {
+            Set-WebConfigEnvironmentVariable -WebConfig $webConfig -EnvironmentVariables $environmentVariables -Name 'Keycloak__HealthUrl' -Value $keycloakHealthUrl
+          }
+
           $webConfig.Save($webConfigPath)
           Set-Content -LiteralPath (Join-Path $Site 'app_offline.htm') -Value 'Deploying Checknote' -NoNewline
           Start-Sleep -Seconds 2
@@ -542,7 +625,7 @@ jobs:
           '@
           Set-Content -LiteralPath publish-site.ps1 -Value $publishScript -Encoding UTF8
           scp @sshOptions -i $keyPath -P $env:WEB_SERVER_PORT publish-site.ps1 "${remote}:$remotePublishScriptPath"
-          $publishCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $remotePublishScriptPath + '" -Site "' + $env:WEB_SERVER_REMOTE_PATH + '" -Stage "' + $remoteDeployPath + '" -ConnectionStringB64 "' + $connectionStringB64 + '" -SeqServerUrlB64 "' + $seqServerUrlB64 + '" -SeqApiKeyB64 "' + $seqApiKeyB64 + '"'
+          $publishCommand = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + $remotePublishScriptPath + '" -Site "' + $env:WEB_SERVER_REMOTE_PATH + '" -Stage "' + $remoteDeployPath + '" -ConnectionStringB64 "' + $connectionStringB64 + '" -SeqServerUrlB64 "' + $seqServerUrlB64 + '" -SeqApiKeyB64 "' + $seqApiKeyB64 + '" -AuthenticationAudienceB64 "' + $authenticationAudienceB64 + '" -AuthenticationMetadataAddressB64 "' + $authenticationMetadataAddressB64 + '" -AuthenticationValidIssuerB64 "' + $authenticationValidIssuerB64 + '" -AuthenticationRequireHttpsMetadataB64 "' + $authenticationRequireHttpsMetadataB64 + '" -KeycloakRealmB64 "' + $keycloakRealmB64 + '" -KeycloakPublicClientIdB64 "' + $keycloakPublicClientIdB64 + '" -KeycloakHealthUrlB64 "' + $keycloakHealthUrlB64 + '"'
           Write-Host "::add-mask::$publishCommand"
           ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote $publishCommand
 
@@ -603,6 +686,99 @@ jobs:
           }
 
           Write-Host 'Verified Seq environment variables in deployed web.config.'
+          "@
+          $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($verifyScript))
+          Write-Host "::add-mask::$encodedScript"
+          ssh @sshOptions -i $keyPath -p $env:WEB_SERVER_PORT $remote "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encodedScript"
+
+      - name: Verify authentication deployment configuration
+        timeout-minutes: 5
+        env:
+          WEB_SERVER_HOST: ${{ secrets.WEB_SERVER_HOST }}
+          WEB_SERVER_USERNAME: ${{ secrets.WEB_SERVER_USERNAME }}
+          WEB_SERVER_PORT: ${{ secrets.WEB_SERVER_PORT }}
+          WEB_SERVER_REMOTE_PATH: ${{ secrets.WEB_SERVER_REMOTE_PATH }}
+          CHECKNOTE_AUTHENTICATION_AUDIENCE: ${{ vars.CHECKNOTE_AUTHENTICATION_AUDIENCE }}
+          CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS: ${{ vars.CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS }}
+          CHECKNOTE_AUTHENTICATION_VALID_ISSUER: ${{ vars.CHECKNOTE_AUTHENTICATION_VALID_ISSUER }}
+          CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA: ${{ vars.CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA }}
+          CHECKNOTE_KEYCLOAK_REALM: ${{ vars.CHECKNOTE_KEYCLOAK_REALM }}
+          CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID: ${{ vars.CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID }}
+          CHECKNOTE_KEYCLOAK_HEALTH_URL: ${{ vars.CHECKNOTE_KEYCLOAK_HEALTH_URL }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS)) {
+            Write-Host 'CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS is not configured; skipping authentication deployment configuration verification.'
+            exit 0
+          }
+
+          $keyPath = Join-Path $HOME '.ssh/web_server_deploy_key'
+          $remote = "$env:WEB_SERVER_USERNAME@$env:WEB_SERVER_HOST"
+          $sshOptions = @('-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=30', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=4')
+          Write-Host "::add-mask::$remote"
+
+          function Convert-ToBase64OrEmpty {
+            param([string] $Value)
+
+            if ([string]::IsNullOrWhiteSpace($Value)) {
+              return ''
+            }
+
+            return [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Value))
+          }
+
+          $expectedVariables = @{
+            'Authentication__Audience' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_AUDIENCE
+            'Authentication__MetadataAddress' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_METADATA_ADDRESS
+            'Authentication__TokenValidationParameters__ValidIssuers__0' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_VALID_ISSUER
+            'Authentication__RequireHttpsMetadata' = Convert-ToBase64OrEmpty $env:CHECKNOTE_AUTHENTICATION_REQUIRE_HTTPS_METADATA
+            'Keycloak__Realm' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_REALM
+            'Keycloak__PublicClientId' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_PUBLIC_CLIENT_ID
+            'Keycloak__HealthUrl' = Convert-ToBase64OrEmpty $env:CHECKNOTE_KEYCLOAK_HEALTH_URL
+          }
+
+          foreach ($encodedValue in $expectedVariables.Values) {
+            if (![string]::IsNullOrWhiteSpace($encodedValue)) {
+              Write-Host "::add-mask::$encodedValue"
+            }
+          }
+
+          $expectedVariablesJson = $expectedVariables | ConvertTo-Json -Compress
+          $expectedVariablesB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($expectedVariablesJson))
+          Write-Host "::add-mask::$expectedVariablesB64"
+          $verifyScript = @"
+          `$ErrorActionPreference = 'Stop'
+          `$webConfigPath = Join-Path '$env:WEB_SERVER_REMOTE_PATH' 'web.config'
+          if (!(Test-Path `$webConfigPath)) {
+            throw 'Expected deployed web.config was not found.'
+          }
+
+          `$expectedVariablesJson = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$expectedVariablesB64'))
+          `$expectedVariables = `$expectedVariablesJson | ConvertFrom-Json
+          [xml]`$webConfig = Get-Content -LiteralPath `$webConfigPath
+          `$environmentVariables = `$webConfig.configuration.'system.webServer'.aspNetCore.environmentVariables
+          if (`$null -eq `$environmentVariables) {
+            throw 'Deployed web.config is missing aspNetCore environmentVariables.'
+          }
+
+          foreach (`$expectedVariable in `$expectedVariables.PSObject.Properties) {
+            if ([string]::IsNullOrWhiteSpace(`$expectedVariable.Value)) {
+              continue
+            }
+
+            `$name = `$expectedVariable.Name
+            `$expectedValue = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(`$expectedVariable.Value))
+            `$actualVariable = `$environmentVariables.environmentVariable | Where-Object { `$_.name -eq `$name } | Select-Object -First 1
+            if (`$null -eq `$actualVariable) {
+              throw "Expected authentication environment variable `$name was not found in deployed web.config."
+            }
+            if (`$actualVariable.value -ne `$expectedValue) {
+              throw "Authentication environment variable `$name does not match the configured production value."
+            }
+          }
+
+          Write-Host 'Verified authentication environment variables in deployed web.config.'
           "@
           $encodedScript = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($verifyScript))
           Write-Host "::add-mask::$encodedScript"

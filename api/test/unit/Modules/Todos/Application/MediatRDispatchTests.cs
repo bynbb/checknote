@@ -1,7 +1,9 @@
 namespace Checknote.Api.UnitTests.Modules.Todos.Application;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Checknote.Api.UnitTests.Support;
 using Checknote.Common.Application;
@@ -23,11 +25,21 @@ internal static class MediatRDispatchTests
         Todo first = new(1, "Plan the slice", false);
         Todo second = new(2, "Ship the slice", true);
         FakeTodoRepository todoRepository = new([first, second]);
-        User currentUser = new("user-1", "Ada Lovelace", "ada@example.test");
+        User currentUser = User.Create(
+            Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+            "keycloak-subject-1",
+            "Ada Lovelace",
+            "ada@example.test");
+        AuthenticatedUser authenticatedUser = new(
+            currentUser.IdentityId,
+            currentUser.Name,
+            currentUser.Email);
+        FakeUserRepository userRepository = new(currentUser);
 
         ServiceCollection services = new();
         services.AddSingleton<ITodoRepository>(todoRepository);
-        services.AddSingleton<ICurrentUserProvider>(new FakeCurrentUserProvider(currentUser));
+        services.AddSingleton<ICurrentUserProvider>(new FakeCurrentUserProvider(authenticatedUser));
+        services.AddSingleton<IUserRepository>(userRepository);
         services.AddApplication(
             Checknote.Modules.Todos.Application.AssemblyReference.Assembly,
             Checknote.Modules.Users.Application.AssemblyReference.Assembly);
@@ -101,13 +113,46 @@ internal static class MediatRDispatchTests
 
     private sealed class FakeCurrentUserProvider : ICurrentUserProvider
     {
-        private readonly User currentUser;
+        private readonly AuthenticatedUser currentUser;
 
-        public FakeCurrentUserProvider(User currentUser)
+        public FakeCurrentUserProvider(AuthenticatedUser currentUser)
         {
             this.currentUser = currentUser;
         }
 
-        public Result<User> GetCurrentUser() => Result.Success(currentUser);
+        public Result<AuthenticatedUser> GetCurrentUser() => Result.Success(currentUser);
+    }
+
+    private sealed class FakeUserRepository : IUserRepository
+    {
+        private readonly User currentUser;
+
+        public FakeUserRepository(User currentUser)
+        {
+            this.currentUser = currentUser;
+        }
+
+        public Task<User?> GetByIdentityIdAsync(
+            string identityId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<User?>(currentUser.IdentityId == identityId ? currentUser : null);
+        }
+
+        public Task<User?> GetByEmailAsync(
+            string email,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<User?>(currentUser.Email == email ? currentUser : null);
+        }
+
+        public void Insert(User user)
+        {
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

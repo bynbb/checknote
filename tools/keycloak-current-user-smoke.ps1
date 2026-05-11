@@ -42,9 +42,13 @@ $tokenResponse = Invoke-RestMethod -Method Post -Uri $tokenUrl -ContentType 'app
 Assert-Value (![string]::IsNullOrWhiteSpace($tokenResponse.access_token)) `
   'Keycloak did not return an access token.'
 
-$apiResponse = Invoke-RestMethod -Method Get -Uri $CurrentUserUrl -Headers @{
-  Authorization = "Bearer $($tokenResponse.access_token)"
+function Invoke-CurrentUser {
+  Invoke-RestMethod -Method Get -Uri $CurrentUserUrl -Headers @{
+    Authorization = "Bearer $($tokenResponse.access_token)"
+  }
 }
+
+$apiResponse = Invoke-CurrentUser
 
 Assert-Value (![string]::IsNullOrWhiteSpace($apiResponse.id)) `
   'Current-user response is missing id.'
@@ -63,4 +67,9 @@ if (![string]::IsNullOrWhiteSpace($ExpectedName)) {
     "Current-user name did not match the expected smoke user name."
 }
 
-Write-Output "Keycloak current-user smoke passed for user id '$($apiResponse.id)' and name '$($apiResponse.name)'."
+$secondApiResponse = Invoke-CurrentUser
+
+Assert-Value ($secondApiResponse.id -eq $apiResponse.id) `
+  'Current-user response did not keep a stable Checknote user id across calls.'
+
+Write-Output "Keycloak current-user smoke passed for stable Checknote user id '$($apiResponse.id)' and name '$($apiResponse.name)'."

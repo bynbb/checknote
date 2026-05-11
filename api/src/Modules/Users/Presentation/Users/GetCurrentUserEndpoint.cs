@@ -38,6 +38,6 @@ public sealed record UserResponse(string Id, string Name, string Email)
 {
     public static UserResponse From(User user)
     {
-        return new UserResponse(user.Id, user.Name, user.Email);
+        return new UserResponse(user.Id.ToString(), user.Name, user.Email);
     }
 }

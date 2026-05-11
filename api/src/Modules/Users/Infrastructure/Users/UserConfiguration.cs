@@ -14,8 +14,11 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(user => user.Id);
 
         builder.Property(user => user.Id)
-            .HasMaxLength(64)
             .ValueGeneratedNever();
+
+        builder.Property(user => user.IdentityId)
+            .HasMaxLength(128)
+            .IsRequired();
 
         builder.Property(user => user.Name)
             .HasMaxLength(200)
@@ -26,6 +29,9 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.HasIndex(user => user.Email)
+            .IsUnique();
+
+        builder.HasIndex(user => user.IdentityId)
             .IsUnique();
     }
 }

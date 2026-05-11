@@ -3,8 +3,8 @@ namespace Checknote.Api.UnitTests.Modules.Users.Infrastructure;
 using System.Security.Claims;
 using Checknote.Api.UnitTests.Support;
 using Checknote.Common.Domain;
+using Checknote.Modules.Users.Application.Abstractions;
 using Checknote.Modules.Users.Application.Users.GetCurrentUser;
-using Checknote.Modules.Users.Domain.Users;
 using Checknote.Modules.Users.Infrastructure.Users;
 using Microsoft.AspNetCore.Http;
 
@@ -21,21 +21,21 @@ internal static class AuthenticatedCurrentUserProviderTests
 
     private static void MapsKeycloakClaimsToTheCurrentUser()
     {
-        Result<User> result = GetCurrentUser(
+        Result<AuthenticatedUser> result = GetCurrentUser(
             new Claim("sub", "keycloak-user-id"),
             new Claim("preferred_username", "checknote-handle"),
             new Claim("name", "Real Name"),
             new Claim("email", "user@example.test"));
 
         TestAssert.True(result.IsSuccess, "Authenticated user result should succeed.");
-        TestAssert.Equal("keycloak-user-id", result.Value.Id, "Authenticated user id");
+        TestAssert.Equal("keycloak-user-id", result.Value.IdentityId, "Authenticated user identity id");
         TestAssert.Equal("checknote-handle", result.Value.Name, "Authenticated user display name");
         TestAssert.Equal("user@example.test", result.Value.Email, "Authenticated user email");
     }
 
     private static void FallsBackToNameClaimWhenPreferredUsernameIsMissing()
     {
-        Result<User> result = GetCurrentUser(
+        Result<AuthenticatedUser> result = GetCurrentUser(
             new Claim("sub", "keycloak-user-id"),
             new Claim("name", "Fallback Name"),
             new Claim("email", "user@example.test"));
@@ -49,7 +49,7 @@ internal static class AuthenticatedCurrentUserProviderTests
         DefaultHttpContext context = new();
         context.User = new ClaimsPrincipal(new ClaimsIdentity());
 
-        Result<User> result = new AuthenticatedCurrentUserProvider(new HttpContextAccessor
+        Result<AuthenticatedUser> result = new AuthenticatedCurrentUserProvider(new HttpContextAccessor
         {
             HttpContext = context,
         }).GetCurrentUser();
@@ -63,7 +63,7 @@ internal static class AuthenticatedCurrentUserProviderTests
 
     private static void RejectsMissingSubjectClaims()
     {
-        Result<User> result = GetCurrentUser(
+        Result<AuthenticatedUser> result = GetCurrentUser(
             new Claim("preferred_username", "checknote-handle"),
             new Claim("email", "user@example.test"));
 
@@ -76,7 +76,7 @@ internal static class AuthenticatedCurrentUserProviderTests
 
     private static void RejectsMissingEmailClaims()
     {
-        Result<User> result = GetCurrentUser(
+        Result<AuthenticatedUser> result = GetCurrentUser(
             new Claim("sub", "keycloak-user-id"),
             new Claim("preferred_username", "checknote-handle"));
 
@@ -87,7 +87,7 @@ internal static class AuthenticatedCurrentUserProviderTests
             "Missing email claim error code");
     }
 
-    private static Result<User> GetCurrentUser(params Claim[] claims)
+    private static Result<AuthenticatedUser> GetCurrentUser(params Claim[] claims)
     {
         DefaultHttpContext context = new();
         context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"));

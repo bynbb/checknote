@@ -4,7 +4,6 @@ using System.Security.Claims;
 using Checknote.Common.Domain;
 using Checknote.Modules.Users.Application.Abstractions;
 using Checknote.Modules.Users.Application.Users.GetCurrentUser;
-using Checknote.Modules.Users.Domain.Users;
 using Microsoft.AspNetCore.Http;
 
 public sealed class AuthenticatedCurrentUserProvider : ICurrentUserProvider
@@ -21,23 +20,23 @@ public sealed class AuthenticatedCurrentUserProvider : ICurrentUserProvider
         this.httpContextAccessor = httpContextAccessor;
     }
 
-    public Result<User> GetCurrentUser()
+    public Result<AuthenticatedUser> GetCurrentUser()
     {
         ClaimsPrincipal? principal = httpContextAccessor.HttpContext?.User;
 
         if (principal?.Identity?.IsAuthenticated != true)
         {
-            return Result.Failure<User>(GetCurrentUserErrors.AuthenticationRequired);
+            return Result.Failure<AuthenticatedUser>(GetCurrentUserErrors.AuthenticationRequired);
         }
 
-        string? id = FindClaimValue(
+        string? identityId = FindClaimValue(
             principal,
             SubjectClaimType,
             ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(id))
+        if (string.IsNullOrWhiteSpace(identityId))
         {
-            return Result.Failure<User>(GetCurrentUserErrors.MissingSubjectClaim);
+            return Result.Failure<AuthenticatedUser>(GetCurrentUserErrors.MissingSubjectClaim);
         }
 
         string? email = FindClaimValue(
@@ -47,7 +46,7 @@ public sealed class AuthenticatedCurrentUserProvider : ICurrentUserProvider
 
         if (string.IsNullOrWhiteSpace(email))
         {
-            return Result.Failure<User>(GetCurrentUserErrors.MissingEmailClaim);
+            return Result.Failure<AuthenticatedUser>(GetCurrentUserErrors.MissingEmailClaim);
         }
 
         string name = FindClaimValue(
@@ -56,7 +55,7 @@ public sealed class AuthenticatedCurrentUserProvider : ICurrentUserProvider
             NameClaimType,
             ClaimTypes.Name) ?? email;
 
-        return Result.Success(new User(id, name, email));
+        return Result.Success(new AuthenticatedUser(identityId, name, email));
     }
 
     private static string? FindClaimValue(ClaimsPrincipal principal, params string[] claimTypes)

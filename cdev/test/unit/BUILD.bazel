@@ -1,6 +1,26 @@
 genrule(
+    name = "angular_unit_tests",
+    srcs = [
+        "//cdev:app_sources",
+        "angular/angular-testing-harness.spec.ts",
+    ],
+    outs = ["cdev-angular-unit-tests.stamp"],
+    cmd = """
+set -euo pipefail
+cd cdev
+../node_modules/.bin/ng test checknote --watch=false --progress=false
+touch "../$@"
+""",
+    cmd_bat = """
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; Push-Location cdev; ..\\node_modules\\.bin\\ng.cmd test checknote --watch=false --progress=false; if ($$LASTEXITCODE -ne 0) { exit $$LASTEXITCODE }; Pop-Location; Set-Content -Path '$@' -Value 'ok'"
+""",
+    visibility = ["//visibility:private"],
+)
+
+genrule(
     name = "unit_tests",
     srcs = [
+        ":angular_unit_tests",
         "//cdev/src/common/domain:domain",
         "//cdev/src/modules/todos/presentation:presentation",
         "common/domain/result.spec.ts",

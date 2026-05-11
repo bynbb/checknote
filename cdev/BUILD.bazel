@@ -106,6 +106,8 @@ filegroup(
     ]) + [
         "angular.json",
         "tsconfig.app.json",
+        "tsconfig.spec.json",
+        "vitest.config.mjs",
         "//:workspace_files",
     ],
 )

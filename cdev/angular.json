@@ -51,6 +51,19 @@
             }
           },
           "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest",
+            "runnerConfig": "vitest.config.mjs",
+            "include": [
+              "../test/unit/angular/**/*.spec.ts"
+            ],
+            "watch": false,
+            "progress": false
+          }
         }
       }
     }

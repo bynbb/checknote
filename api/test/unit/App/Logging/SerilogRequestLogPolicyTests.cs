@@ -2,6 +2,7 @@ namespace Checknote.Api.Logging.Tests;
 
 using System;
 using System.Threading.Tasks;
+using Checknote.Api.UnitTests.App.Authorization;
 using Checknote.Api.UnitTests.App.Authentication;
 using Checknote.Api.UnitTests.Common.Presentation.Endpoints;
 using Checknote.Api.UnitTests.Modules.Database;
@@ -49,6 +50,7 @@ internal static class Program
         AuthenticatedCurrentUserProviderTests.Run();
         await EndpointRegistrationExtensionsTests.Run();
         await SchemaBoundaryTests.Run();
+        await ApiAuthorizationTests.Run();
 
         return 0;
     }

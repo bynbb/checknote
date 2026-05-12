@@ -820,27 +820,27 @@ jobs:
           }
           throw "Expected $url to return '$expected' before the 5-minute readiness deadline."
 
-      - name: Verify Todos API
+      - name: Verify Todos API Requires Authentication
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $url = 'https://www.checknote.io/api/todos'
           for ($attempt = 1; $attempt -le 6; $attempt++) {
             try {
-              $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20
-              $todos = $response.Content | ConvertFrom-Json -NoEnumerate
-              if ($response.StatusCode -eq 200 -and $todos -is [array]) {
-                Write-Host "Verified $url"
-                exit 0
-              }
-              Write-Host "Attempt $attempt returned status $($response.StatusCode) and body '$($response.Content)'"
+              Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20 | Out-Null
+              Write-Host "Attempt $attempt returned success, expected 401."
             }
             catch {
-              Write-Host "Attempt $attempt failed: $($_.Exception.Message)"
+              $statusCode = $_.Exception.Response.StatusCode.value__
+              if ($statusCode -eq 401) {
+                Write-Host "Verified $url requires authentication"
+                exit 0
+              }
+              Write-Host "Attempt $attempt failed with status ${statusCode}: $($_.Exception.Message)"
             }
             Start-Sleep -Seconds 5
           }
-          throw "Expected $url to return a JSON task list."
+          throw "Expected $url to require authentication."
 
       - name: Verify Angular app
         shell: pwsh

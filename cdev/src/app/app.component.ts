@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { GlobalErrorBannerComponent } from '@cdev/common/presentation';
-import { TodosPageComponent } from '@cdev/modules/todos/presentation';
 import { UserSummaryComponent } from '@cdev/modules/users/presentation';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [GlobalErrorBannerComponent, UserSummaryComponent, TodosPageComponent],
+  imports: [GlobalErrorBannerComponent, UserSummaryComponent, RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })

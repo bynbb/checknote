@@ -219,10 +219,14 @@ try {
         throw "Unexpected /hello-world response: $($hello.Content)"
     }
 
-    $todos = Invoke-WebRequest -Uri "$base/api/todos" -UseBasicParsing -TimeoutSec 5
-
-    if ($todos.StatusCode -ne 200 -or $todos.Content -notmatch 'Build the app with Bazel') {
-        throw "Unexpected /api/todos response: $($todos.Content)"
+    try {
+        Invoke-WebRequest -Uri "$base/api/todos" -UseBasicParsing -TimeoutSec 5 | Out-Null
+        throw 'Expected /api/todos to require authentication.'
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 401) {
+            throw
+        }
     }
 
     $authConfig = Invoke-WebRequest -Uri "$base/api/auth/config" -UseBasicParsing -TimeoutSec 5
@@ -247,8 +251,8 @@ try {
     $badStatus = [int] $bad.StatusCode
     $badBodyText = $bad.Content.ReadAsStringAsync().GetAwaiter().GetResult()
 
-    if ($badStatus -ne 400 -or $badBodyText -notmatch 'Todos.ReservedTitle') {
-        throw "Unexpected reserved todo response: status=$badStatus body=$badBodyText"
+    if ($badStatus -ne 401) {
+        throw "Expected unauthenticated /api/todos/task-list to return 401, got: status=$badStatus body=$badBodyText"
     }
 
     try {
@@ -285,8 +289,8 @@ try {
     Assert-OpenApiResponses -OpenApi $openApi -Path '/hello-world' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/health' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/auth/config' -Method 'get' -StatusCodes @('200')
-    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos' -Method 'get' -StatusCodes @('200', '400')
-    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -StatusCodes @('204', '400')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos' -Method 'get' -StatusCodes @('200', '400', '401')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -StatusCodes @('204', '400', '401')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/users/current' -Method 'get' -StatusCodes @('200', '400', '401')
     Assert-OpenApiRequestBodyContent -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ContentType 'application/json'
     Assert-OpenApiTag -OpenApi $openApi -Path '/hello-world' -Method 'get' -ExpectedTag 'System'

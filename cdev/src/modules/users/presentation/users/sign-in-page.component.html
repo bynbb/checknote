@@ -1,0 +1,11 @@
+<main class="signin-shell">
+  <section class="signin-panel" aria-labelledby="signin-title">
+    <p class="eyebrow">Checknote</p>
+    <h1 id="signin-title">Sign in</h1>
+    @if (facade.auth().status === 'unavailable') {
+      <p class="status-copy">Sign in unavailable</p>
+    } @else {
+      <button type="button" (click)="facade.signIn()">Sign in</button>
+    }
+  </section>
+</main>

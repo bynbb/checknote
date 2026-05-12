@@ -33,7 +33,9 @@ public sealed class GetTodosEndpoint : IEndpoint
         })
         .WithName("GetTodos")
         .WithTags("Todos")
+        .RequireAuthorization()
         .Produces<IEnumerable<TodoResponse>>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status401Unauthorized)
         .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }
@@ -63,8 +65,10 @@ public sealed class SaveTaskListEndpoint : IEndpoint
             })
             .WithName("SaveTaskList")
             .WithTags("Todos")
+            .RequireAuthorization()
             .Accepts<SaveTaskListRequest>("application/json")
             .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }

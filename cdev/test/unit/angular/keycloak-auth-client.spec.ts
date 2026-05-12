@@ -1,7 +1,11 @@
 import { KeycloakAuthClient } from '@cdev/common/infrastructure';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('KeycloakAuthClient', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('marks auth unavailable when public config is disabled', async () => {
     const observed: string[] = [];
     const client = new KeycloakAuthClient(
@@ -102,6 +106,39 @@ describe('KeycloakAuthClient', () => {
     expect(keycloak.updateTokenCalls).toBe(1);
     expect(observed).toEqual([]);
   });
+
+  it('does not leave app startup waiting when Keycloak initialization never settles', async () => {
+    vi.useFakeTimers();
+    const observed: string[] = [];
+    const keycloak = new FakeKeycloak(new Promise<boolean>(() => undefined));
+    const client = new KeycloakAuthClient(
+      () => Promise.resolve({
+        enabled: true,
+        authServerUrl: 'https://auth.checknote.io',
+        realm: 'checknote',
+        clientId: 'checknote-angular',
+      }),
+      { origin: 'https://www.checknote.io' } as Location,
+      () => keycloak,
+    );
+
+    client.subscribe((state) => observed.push(state.status));
+
+    let initialized = false;
+    void client.initialize().then(() => {
+      initialized = true;
+    });
+
+    await vi.advanceTimersByTimeAsync(10000);
+    await Promise.resolve();
+
+    expect(initialized).toBe(true);
+    expect(client.getState()).toMatchObject({
+      status: 'unavailable',
+      reason: 'Authentication could not be initialized.',
+    });
+    expect(observed).toEqual(['unavailable']);
+  });
 });
 
 class FakeKeycloak {
@@ -113,7 +150,7 @@ class FakeKeycloak {
   updateTokenCalls = 0;
 
   constructor(
-    private readonly initResult: boolean,
+    private readonly initResult: boolean | Promise<boolean>,
     seed: { token?: string; tokenParsed?: Record<string, unknown> } = {},
   ) {
     this.token = seed.token;
@@ -122,7 +159,10 @@ class FakeKeycloak {
 
   init(options: unknown): Promise<boolean> {
     this.initOptions = options;
-    this.authenticated = this.initResult;
+    if (typeof this.initResult === 'boolean') {
+      this.authenticated = this.initResult;
+    }
+
     return Promise.resolve(this.initResult);
   }
 

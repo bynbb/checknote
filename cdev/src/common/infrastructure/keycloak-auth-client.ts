@@ -11,6 +11,8 @@ interface PublicAuthConfig {
 type FetchJson = (url: string) => Promise<unknown>;
 type CreateKeycloak = (config: PublicAuthConfig) => ChecknoteKeycloakClient;
 
+const defaultInitializeTimeoutMs = 10000;
+
 interface ChecknoteKeycloakClient {
   readonly authenticated?: boolean;
   readonly token?: string;
@@ -34,6 +36,7 @@ export class KeycloakAuthClient implements AuthClient {
     private readonly fetchJson: FetchJson = defaultFetchJson,
     private readonly browserLocation: Location = window.location,
     private readonly createKeycloak: CreateKeycloak = defaultCreateKeycloak,
+    private readonly initializeTimeoutMs: number = defaultInitializeTimeoutMs,
   ) {}
 
   async initialize(): Promise<void> {
@@ -50,10 +53,13 @@ export class KeycloakAuthClient implements AuthClient {
 
       this.keycloak = this.createKeycloak(config);
 
-      const authenticated = await this.keycloak.init({
-        pkceMethod: 'S256',
-        checkLoginIframe: false,
-      });
+      const authenticated = await withTimeout(
+        this.keycloak.init({
+          pkceMethod: 'S256',
+          checkLoginIframe: false,
+        }),
+        this.initializeTimeoutMs,
+      );
 
       this.setState(authenticated ? toAuthenticatedSession(this.keycloak.tokenParsed) : { status: 'anonymous' });
     } catch {
@@ -162,6 +168,25 @@ function readText(value: unknown): string {
 
 function getAppRootUrl(location: Location): string {
   return `${location.origin}/`;
+}
+
+function withTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutHandle = window.setTimeout(() => {
+      reject(new Error('Authentication initialization timed out.'));
+    }, timeoutMs);
+
+    operation.then(
+      (result) => {
+        window.clearTimeout(timeoutHandle);
+        resolve(result);
+      },
+      (error: unknown) => {
+        window.clearTimeout(timeoutHandle);
+        reject(error);
+      },
+    );
+  });
 }
 
 function toAuthenticatedSession(token: KeycloakTokenParsed | undefined): AuthSession {

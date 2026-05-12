@@ -209,6 +209,11 @@ jobs:
               Source = Join-Path $bazelBin 'deployment\database\checknote-db-tool.zip'
               Destination = 'artifacts/checknote-db-tool.zip'
               Description = 'database tool'
+            },
+            @{
+              Source = Join-Path $bazelBin 'tools\auth-smoke\checknote-auth-smoke.zip'
+              Destination = 'artifacts/checknote-auth-smoke.zip'
+              Description = 'auth smoke tool'
             }
           )
 
@@ -245,6 +250,14 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Upload Checknote auth smoke artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: artifacts/checknote-auth-smoke.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
+
   deploy:
     name: Deploy to web server
     runs-on: windows-2025-vs2026
@@ -268,6 +281,13 @@ jobs:
         with:
           name: checknote-db-tool.zip
           path: artifact/db-tool
+          skip-decompress: true
+
+      - name: Download Checknote auth smoke artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: checknote-auth-smoke.zip
+          path: artifact/auth-smoke
           skip-decompress: true
 
       - name: Unpack Checknote site
@@ -855,3 +875,64 @@ jobs:
             throw "Expected $url to return the Angular app shell."
           }
           Write-Host "Verified $url"
+
+      - name: Verify authenticated API smoke
+        shell: pwsh
+        env:
+          CHECKNOTE_CHILKAT_LICENSE_KEY: ${{ secrets.CHECKNOTE_CHILKAT_LICENSE_KEY }}
+          CHECKNOTE_AUTH_SMOKE_USERNAME: ${{ secrets.CHECKNOTE_AUTH_SMOKE_USERNAME }}
+          CHECKNOTE_AUTH_SMOKE_PASSWORD: ${{ secrets.CHECKNOTE_AUTH_SMOKE_PASSWORD }}
+          CHECKNOTE_AUTH_SMOKE_CLIENT_SECRET: ${{ secrets.CHECKNOTE_AUTH_SMOKE_CLIENT_SECRET }}
+          CHECKNOTE_AUTH_SMOKE_EXPECTED_EMAIL: ${{ secrets.CHECKNOTE_AUTH_SMOKE_EXPECTED_EMAIL }}
+          CHECKNOTE_AUTH_SMOKE_KEYCLOAK_BASE_URL: ${{ vars.CHECKNOTE_AUTH_SMOKE_KEYCLOAK_BASE_URL }}
+          CHECKNOTE_AUTH_SMOKE_REALM: ${{ vars.CHECKNOTE_AUTH_SMOKE_REALM }}
+          CHECKNOTE_AUTH_SMOKE_CLIENT_ID: ${{ vars.CHECKNOTE_AUTH_SMOKE_CLIENT_ID }}
+          CHECKNOTE_AUTH_SMOKE_CURRENT_USER_URL: ${{ vars.CHECKNOTE_AUTH_SMOKE_CURRENT_USER_URL }}
+          CHECKNOTE_AUTH_SMOKE_TODOS_URL: ${{ vars.CHECKNOTE_AUTH_SMOKE_TODOS_URL }}
+          CHECKNOTE_AUTH_SMOKE_EXPECTED_AUDIENCE: ${{ vars.CHECKNOTE_AUTH_SMOKE_EXPECTED_AUDIENCE }}
+          CHECKNOTE_AUTH_SMOKE_EXPECTED_NAME: ${{ vars.CHECKNOTE_AUTH_SMOKE_EXPECTED_NAME }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $requiredSecretNames = @(
+            'CHECKNOTE_CHILKAT_LICENSE_KEY',
+            'CHECKNOTE_AUTH_SMOKE_USERNAME',
+            'CHECKNOTE_AUTH_SMOKE_PASSWORD'
+          )
+
+          $missingSecretNames = @($requiredSecretNames | Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) })
+          if ($missingSecretNames.Count -gt 0) {
+            Write-Host "Skipping authenticated API smoke because required secrets are missing: $($missingSecretNames -join ', ')"
+            exit 0
+          }
+
+          foreach ($secretName in $requiredSecretNames) {
+            Write-Host "::add-mask::$([Environment]::GetEnvironmentVariable($secretName))"
+          }
+          if (![string]::IsNullOrWhiteSpace($env:CHECKNOTE_AUTH_SMOKE_CLIENT_SECRET)) {
+            Write-Host "::add-mask::$env:CHECKNOTE_AUTH_SMOKE_CLIENT_SECRET"
+          }
+
+          $artifactPath = @('artifact/auth-smoke/checknote-auth-smoke.zip', 'artifact/auth-smoke') |
+            Where-Object { Test-Path $_ -PathType Leaf } |
+            Select-Object -First 1
+          if ([string]::IsNullOrWhiteSpace($artifactPath)) {
+            throw 'Expected auth smoke artifact was not found.'
+          }
+
+          $runDir = Join-Path $env:RUNNER_TEMP 'checknote-auth-smoke'
+          if (Test-Path $runDir) {
+            Remove-Item -LiteralPath $runDir -Recurse -Force
+          }
+          New-Item -ItemType Directory -Force -Path $runDir | Out-Null
+          Expand-Archive -Path $artifactPath -DestinationPath $runDir -Force
+
+          $exe = Join-Path $runDir 'Checknote.AuthSmoke.exe'
+          if (!(Test-Path $exe)) {
+            throw 'Expected Checknote.AuthSmoke.exe was not found in the auth smoke artifact.'
+          }
+
+          & $exe
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }

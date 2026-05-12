@@ -103,4 +103,35 @@ describe('UserSummaryFacade', () => {
     expect(auth.login).toHaveBeenCalledTimes(1);
     expect(auth.logout).toHaveBeenCalledTimes(1);
   });
+
+  it('does not reload the current user when unchanged authenticated state is republished', async () => {
+    const auth = new FakeAuthClient({ status: 'authenticated', name: 'Ada Lovelace', email: 'ada@example.test' });
+    const user: User = {
+      id: 'd54f3510-f44f-462e-bd97-05df139f3644',
+      name: 'Ada Lovelace',
+      email: 'ada@example.test',
+    };
+    const handler = {
+      handle: vi.fn(() => Promise.resolve(user)),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        UserSummaryFacade,
+        { provide: AUTH_CLIENT, useValue: auth },
+        { provide: ERROR_REPORTER, useClass: FakeErrorReporter },
+        { provide: GET_CURRENT_USER_HANDLER, useValue: handler },
+      ],
+    });
+
+    TestBed.inject(UserSummaryFacade);
+    await Promise.resolve();
+
+    expect(handler.handle).toHaveBeenCalledTimes(1);
+
+    auth.setState({ status: 'authenticated', name: 'Ada Lovelace', email: 'ada@example.test' });
+    await Promise.resolve();
+
+    expect(handler.handle).toHaveBeenCalledTimes(1);
+  });
 });

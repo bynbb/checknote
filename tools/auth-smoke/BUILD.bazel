@@ -1,0 +1,29 @@
+load("@rules_dotnet//dotnet:defs.bzl", "publish_binary")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
+load("//tools:csharp_rules.bzl", "checknote_csharp_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+checknote_csharp_binary(
+    name = "auth_smoke_tool",
+    srcs = ["Program.cs"],
+    deps = [
+        "@paket.main//chilkatdncore",
+        "@paket.main//chilkatnativelib",
+    ],
+    out = "Checknote.AuthSmoke",
+    target_frameworks = ["net9.0"],
+)
+
+publish_binary(
+    name = "auth_smoke_tool_publish",
+    binary = ":auth_smoke_tool",
+    self_contained = True,
+    target_framework = "net9.0",
+)
+
+pkg_zip(
+    name = "auth_smoke_tool_zip",
+    srcs = [":auth_smoke_tool_publish"],
+    out = "checknote-auth-smoke.zip",
+)

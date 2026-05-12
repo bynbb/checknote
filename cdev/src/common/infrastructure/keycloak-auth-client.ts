@@ -80,11 +80,11 @@ export class KeycloakAuthClient implements AuthClient {
   }
 
   async login(): Promise<void> {
-    await this.keycloak?.login({ redirectUri: this.browserLocation.origin });
+    await this.keycloak?.login({ redirectUri: getAppRootUrl(this.browserLocation) });
   }
 
   async logout(): Promise<void> {
-    await this.keycloak?.logout({ redirectUri: this.browserLocation.origin });
+    await this.keycloak?.logout({ redirectUri: getAppRootUrl(this.browserLocation) });
   }
 
   async getAccessToken(): Promise<string | null> {
@@ -94,7 +94,12 @@ export class KeycloakAuthClient implements AuthClient {
 
     try {
       await this.keycloak.updateToken(30);
-      this.setState(toAuthenticatedSession(this.keycloak.tokenParsed));
+      const authenticatedState = toAuthenticatedSession(this.keycloak.tokenParsed);
+
+      if (!sameAuthSession(this.state, authenticatedState)) {
+        this.setState(authenticatedState);
+      }
+
       return this.keycloak.token ?? null;
     } catch {
       this.setState({ status: 'anonymous' });
@@ -155,10 +160,30 @@ function readText(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
+function getAppRootUrl(location: Location): string {
+  return `${location.origin}/`;
+}
+
 function toAuthenticatedSession(token: KeycloakTokenParsed | undefined): AuthSession {
   return {
     status: 'authenticated',
     name: readText(token?.['name']) || readText(token?.['preferred_username']),
     email: readText(token?.['email']),
   };
+}
+
+function sameAuthSession(left: AuthSession, right: AuthSession): boolean {
+  if (left.status !== right.status) {
+    return false;
+  }
+
+  if (left.status === 'authenticated' && right.status === 'authenticated') {
+    return left.name === right.name && left.email === right.email;
+  }
+
+  if (left.status === 'unavailable' && right.status === 'unavailable') {
+    return left.reason === right.reason;
+  }
+
+  return true;
 }

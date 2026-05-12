@@ -4,6 +4,7 @@ lowest_matching: true
 strategy: min
 storage: none
 
+nuget ChilkatDnCore 11.4.0
 nuget FluentValidation.DependencyInjectionExtensions 12.1.1
 nuget Microsoft.AspNetCore.Authentication.JwtBearer 9.0.15
 nuget Microsoft.EntityFrameworkCore.SqlServer 9.0.15

@@ -19,8 +19,12 @@ export class UserSummaryFacade {
 
   constructor() {
     this.authClient.subscribe((state) => {
+      const previousState = this.auth();
       this.auth.set(state);
-      void this.loadCurrentUser();
+
+      if (!sameAuthSession(previousState, state)) {
+        void this.loadCurrentUser();
+      }
     });
 
     void this.loadCurrentUser();
@@ -62,4 +66,20 @@ export class UserSummaryFacade {
       this.errors.report(error);
     }
   }
+}
+
+function sameAuthSession(left: AuthSession, right: AuthSession): boolean {
+  if (left.status !== right.status) {
+    return false;
+  }
+
+  if (left.status === 'authenticated' && right.status === 'authenticated') {
+    return left.name === right.name && left.email === right.email;
+  }
+
+  if (left.status === 'unavailable' && right.status === 'unavailable') {
+    return left.reason === right.reason;
+  }
+
+  return true;
 }

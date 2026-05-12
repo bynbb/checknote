@@ -1,0 +1,262 @@
+:root {
+  --checknote-bg: #f5f7fb;
+  --checknote-text: #182033;
+  --checknote-muted: #53617a;
+  --checknote-soft-muted: #63718a;
+  --checknote-card: #ffffff;
+  --checknote-border: #d9e0ec;
+  --checknote-input-border: #c6cfdd;
+  --checknote-primary: #234b78;
+  --checknote-primary-hover: #1d3f66;
+  --checknote-focus: #9db8df;
+  --checknote-accent-bg: #e8f3ee;
+  --checknote-accent: #1f6f54;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+html.pf-v5-theme-dark {
+  color-scheme: light;
+}
+
+body {
+  background: var(--checknote-bg);
+  color: var(--checknote-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body#keycloak-bg,
+.login-pf body,
+.pf-v5-c-login {
+  background: var(--checknote-bg);
+  background-image: none;
+}
+
+.pf-v5-c-login {
+  color: var(--checknote-text);
+  min-height: 100vh;
+}
+
+.pf-v5-c-login__container,
+.login-pf-page {
+  display: grid;
+  gap: 18px;
+  align-content: center;
+  justify-items: center;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+#kc-header,
+.pf-v5-c-login__header,
+.login-pf-page-header {
+  margin: 0;
+  text-align: center;
+  width: min(100%, 560px);
+}
+
+#kc-header-wrapper,
+.kc-logo-text,
+.pf-v5-c-brand {
+  color: var(--checknote-text) !important;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+  opacity: 1;
+  text-shadow: none;
+  text-transform: uppercase;
+  -webkit-text-fill-color: var(--checknote-text);
+}
+
+.pf-v5-c-login__main,
+.card-pf {
+  background: var(--checknote-card);
+  border: 1px solid var(--checknote-border);
+  border-radius: 8px;
+  box-shadow: 0 18px 55px rgba(36, 46, 73, 0.12);
+  color: var(--checknote-text);
+  margin: 0;
+  width: min(100%, 560px);
+}
+
+.pf-v5-c-login__main {
+  border-top: 1px solid var(--checknote-border) !important;
+}
+
+.pf-v5-c-login__main-header,
+.pf-v5-c-login__main-body,
+.pf-v5-c-login__main-footer {
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+.pf-v5-c-login__main-header {
+  padding-top: 28px;
+  padding-bottom: 0;
+}
+
+.pf-v5-c-login__main-body {
+  padding-top: 22px;
+  padding-bottom: 28px;
+}
+
+.pf-v5-c-login__main-footer {
+  padding-bottom: 28px;
+}
+
+#kc-page-title,
+.login-pf-header h1,
+.pf-v5-c-title {
+  color: var(--checknote-text);
+  font-size: clamp(1.85rem, 5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.pf-c-form__label,
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text,
+.control-label,
+label {
+  color: var(--checknote-text);
+  font-weight: 700;
+}
+
+.pf-c-form-control,
+.pf-v5-c-form-control {
+  background: #ffffff;
+  border: 1px solid var(--checknote-input-border);
+  border-radius: 6px;
+  color: var(--checknote-text);
+  font: inherit;
+  min-height: 44px;
+}
+
+.pf-v5-c-form-control > input,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  color: var(--checknote-text);
+  font: inherit;
+  min-height: 42px;
+  padding: 10px 12px;
+}
+
+.pf-c-form-control:focus,
+.pf-v5-c-form-control:focus,
+.pf-v5-c-form-control:focus-within,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+button:focus-visible,
+a:focus-visible {
+  box-shadow: 0 0 0 3px rgba(157, 184, 223, 0.55);
+  outline: 2px solid var(--checknote-focus);
+  outline-offset: 1px;
+}
+
+.pf-c-button.pf-m-primary,
+.pf-v5-c-button.pf-m-primary,
+#kc-login,
+#kc-form-buttons input[type="submit"] {
+  background: var(--checknote-primary);
+  border: 1px solid var(--checknote-primary);
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  min-height: 44px;
+}
+
+.pf-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:hover,
+#kc-login:hover,
+#kc-form-buttons input[type="submit"]:hover {
+  background: var(--checknote-primary-hover);
+}
+
+.pf-c-button.pf-m-control,
+.pf-v5-c-button.pf-m-control {
+  background: #ffffff;
+  border-color: var(--checknote-input-border);
+  border-radius: 6px;
+  color: var(--checknote-text);
+  min-height: 44px;
+}
+
+a,
+.login-pf a,
+.pf-v5-c-login a {
+  color: var(--checknote-primary);
+  font-weight: 700;
+}
+
+a:hover,
+.login-pf a:hover,
+.pf-v5-c-login a:hover {
+  color: var(--checknote-primary-hover);
+}
+
+#kc-info,
+.login-pf-signup {
+  background: var(--checknote-accent-bg);
+  border-radius: 8px;
+  color: var(--checknote-accent);
+  font-weight: 700;
+  margin: 20px 28px 28px;
+  padding: 14px;
+}
+
+.pf-v5-c-login__main-footer {
+  display: none;
+}
+
+.pf-v5-c-login__main-footer:has(a),
+.pf-v5-c-login__main-footer:has(p),
+.pf-v5-c-login__main-footer:has(#kc-registration),
+.pf-v5-c-login__main-footer:has(#kc-info-wrapper) {
+  background: var(--checknote-accent-bg);
+  border-radius: 8px;
+  color: var(--checknote-accent);
+  display: block;
+  font-weight: 700;
+  margin: 20px 28px 28px;
+  padding: 14px;
+}
+
+#kc-info:empty {
+  display: none;
+}
+
+#kc-form-options,
+#kc-registration,
+#kc-reset-password-form,
+#kc-terms-text,
+.instruction {
+  color: var(--checknote-soft-muted);
+}
+
+.pf-c-alert,
+.pf-v5-c-alert {
+  border-radius: 8px;
+}
+
+@media (max-width: 560px) {
+  .pf-v5-c-login__container,
+  .login-pf-page {
+    padding: 20px 16px;
+  }
+
+  .pf-v5-c-login__main-header,
+  .pf-v5-c-login__main-body,
+  .pf-v5-c-login__main-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

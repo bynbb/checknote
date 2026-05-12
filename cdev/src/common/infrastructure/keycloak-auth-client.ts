@@ -1,5 +1,5 @@
 import { AuthClient, AuthSession } from '@cdev/common/application';
-import Keycloak, { KeycloakInstance, KeycloakTokenParsed } from 'keycloak-js';
+import Keycloak, { KeycloakTokenParsed } from 'keycloak-js';
 
 interface PublicAuthConfig {
   readonly enabled: boolean;
@@ -9,15 +9,31 @@ interface PublicAuthConfig {
 }
 
 type FetchJson = (url: string) => Promise<unknown>;
+type CreateKeycloak = (config: PublicAuthConfig) => ChecknoteKeycloakClient;
+
+interface ChecknoteKeycloakClient {
+  readonly authenticated?: boolean;
+  readonly token?: string;
+  readonly tokenParsed?: KeycloakTokenParsed;
+
+  init(options: { pkceMethod: 'S256'; checkLoginIframe: false }): Promise<boolean>;
+
+  login(options: { redirectUri: string }): Promise<void>;
+
+  logout(options: { redirectUri: string }): Promise<void>;
+
+  updateToken(minValidity: number): Promise<boolean>;
+}
 
 export class KeycloakAuthClient implements AuthClient {
-  private keycloak: KeycloakInstance | null = null;
+  private keycloak: ChecknoteKeycloakClient | null = null;
   private state: AuthSession = { status: 'loading' };
   private readonly listeners: Array<(state: AuthSession) => void> = [];
 
   constructor(
     private readonly fetchJson: FetchJson = defaultFetchJson,
     private readonly browserLocation: Location = window.location,
+    private readonly createKeycloak: CreateKeycloak = defaultCreateKeycloak,
   ) {}
 
   async initialize(): Promise<void> {
@@ -32,17 +48,11 @@ export class KeycloakAuthClient implements AuthClient {
         return;
       }
 
-      this.keycloak = new Keycloak({
-        url: config.authServerUrl,
-        realm: config.realm,
-        clientId: config.clientId,
-      });
+      this.keycloak = this.createKeycloak(config);
 
       const authenticated = await this.keycloak.init({
-        onLoad: 'check-sso',
         pkceMethod: 'S256',
         checkLoginIframe: false,
-        silentCheckSsoFallback: false,
       });
 
       this.setState(authenticated ? toAuthenticatedSession(this.keycloak.tokenParsed) : { status: 'anonymous' });
@@ -108,6 +118,14 @@ async function defaultFetchJson(url: string): Promise<unknown> {
   });
 
   return response.json() as Promise<unknown>;
+}
+
+function defaultCreateKeycloak(config: PublicAuthConfig): ChecknoteKeycloakClient {
+  return new Keycloak({
+    url: config.authServerUrl,
+    realm: config.realm,
+    clientId: config.clientId,
+  });
 }
 
 function readPublicAuthConfig(value: unknown): PublicAuthConfig {

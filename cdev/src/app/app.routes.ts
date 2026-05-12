@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authenticatedRouteGuard } from '@cdev/common/composition/auth/auth-route.guard';
+import { authenticatedRouteGuard, signInRouteGuard } from '@cdev/common/composition/auth/auth-route.guard';
 import { TodosPageComponent } from '@cdev/modules/todos/presentation';
 import { SignInPageComponent } from '@cdev/modules/users/presentation';
 
@@ -12,6 +12,7 @@ export const routes: Routes = [
   {
     path: 'sign-in',
     component: SignInPageComponent,
+    canActivate: [signInRouteGuard],
   },
   {
     path: '**',

@@ -23,6 +23,8 @@ The API may validate tokens against a server-local metadata URL such as `http://
 
 The `themes/checknote/login` folder contains the Checknote Keycloak login theme. It is served by Keycloak from `auth.checknote.io`, not by the Angular app from `www.checknote.io`.
 
+The theme inherits from Keycloak `base`, vendors Normalize.css and Skeleton 2.0.4 as local CSS baselines, then layers `checknote-login.css` on top for the Checknote-specific layout and palette. The live auth host should not depend on a public CSS CDN. Keycloak still owns the auth flow/templates, while Checknote owns the visible auth page styling.
+
 The first theme pass is CSS-first and follows the current task-list palette:
 
 - page background: `#f5f7fb`

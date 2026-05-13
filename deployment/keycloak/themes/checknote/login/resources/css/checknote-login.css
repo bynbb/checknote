@@ -11,140 +11,315 @@
   --checknote-focus: #9db8df;
   --checknote-accent-bg: #e8f3ee;
   --checknote-accent: #1f6f54;
+  --checknote-danger: #b42318;
+  --checknote-eye-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html,
 body {
   min-height: 100%;
+  overflow-x: hidden;
+  width: 100%;
 }
 
-html.pf-v5-theme-dark {
-  color-scheme: light;
+html {
+  background: var(--checknote-bg);
 }
 
 body {
   background: var(--checknote-bg);
+  background-image: none;
   color: var(--checknote-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+  overflow-x: hidden;
 }
 
+body[data-page-id] {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+body[data-page-id] > div,
+.login-pf-page,
+.pf-v5-c-login,
+.pf-v5-c-login__container {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  justify-content: center;
+  max-width: 100vw;
+  min-height: 100vh;
+  min-width: 0;
+  padding: 44px 16px;
+  width: 100%;
+}
+
+body[data-page-id] > div > div:not(#kc-header),
+.card-pf,
+.pf-v5-c-login__main {
+  background: var(--checknote-card);
+  border: 1px solid var(--checknote-border);
+  border-top: 4px solid #0969da;
+  border-radius: 8px;
+  box-shadow: 0 18px 55px rgba(36, 46, 73, 0.12);
+  color: var(--checknote-text);
+  margin: 0;
+  max-width: min(560px, calc(100vw - 32px));
+  min-width: 0;
+  padding: 36px;
+  width: min(560px, calc(100vw - 32px));
+}
+
+html.pf-v5-theme-dark,
 body#keycloak-bg,
-.login-pf body,
+body.login-pf,
+.login-pf,
 .pf-v5-c-login {
   background: var(--checknote-bg);
   background-image: none;
-}
-
-.pf-v5-c-login {
-  color: var(--checknote-text);
-  min-height: 100vh;
-}
-
-.pf-v5-c-login__container,
-.login-pf-page {
-  display: grid;
-  gap: 18px;
-  align-content: center;
-  justify-items: center;
-  min-height: 100vh;
-  padding: 32px 16px;
+  color-scheme: light;
 }
 
 #kc-header,
-.pf-v5-c-login__header,
-.login-pf-page-header {
+.login-pf-page-header,
+.pf-v5-c-login__header {
   margin: 0;
   text-align: center;
-  width: min(100%, 560px);
+  width: min(560px, calc(100vw - 32px));
 }
 
 #kc-header-wrapper,
 .kc-logo-text,
 .pf-v5-c-brand {
+  background: none;
   color: var(--checknote-text) !important;
-  font-size: 0.85rem;
+  display: block;
+  font-size: 0;
   font-weight: 800;
+  height: auto;
   letter-spacing: 0;
-  line-height: 1.2;
+  line-height: 0;
   opacity: 1;
+  text-align: center;
+  text-indent: 0;
   text-shadow: none;
-  text-transform: uppercase;
+  text-transform: none;
   -webkit-text-fill-color: var(--checknote-text);
 }
 
-.pf-v5-c-login__main,
-.card-pf {
-  background: var(--checknote-card);
-  border: 1px solid var(--checknote-border);
-  border-radius: 8px;
-  box-shadow: 0 18px 55px rgba(36, 46, 73, 0.12);
+#kc-header-wrapper::before,
+.kc-logo-text::before,
+.pf-v5-c-brand::before {
   color: var(--checknote-text);
-  margin: 0;
-  width: min(100%, 560px);
+  content: "Checknote";
+  display: inline-block;
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.1;
+  text-transform: none;
+  -webkit-text-fill-color: var(--checknote-text);
 }
 
-.pf-v5-c-login__main {
-  border-top: 1px solid var(--checknote-border) !important;
-}
-
+header,
 .pf-v5-c-login__main-header,
 .pf-v5-c-login__main-body,
 .pf-v5-c-login__main-footer {
-  padding-left: 28px;
-  padding-right: 28px;
+  padding: 0;
 }
 
+header,
 .pf-v5-c-login__main-header {
-  padding-top: 28px;
-  padding-bottom: 0;
+  margin: 0 0 28px;
 }
 
-.pf-v5-c-login__main-body {
-  padding-top: 22px;
-  padding-bottom: 28px;
-}
-
-.pf-v5-c-login__main-footer {
-  padding-bottom: 28px;
+#kc-content,
+#kc-content-wrapper,
+#kc-form,
+#kc-form-wrapper,
+#kc-form-login,
+#kc-register-form,
+#kc-reset-password-form,
+.pf-v5-c-form,
+.form-horizontal {
+  min-width: 0;
+  width: 100%;
 }
 
 #kc-page-title,
 .login-pf-header h1,
 .pf-v5-c-title {
   color: var(--checknote-text);
-  font-size: clamp(1.85rem, 5vw, 2rem);
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 0;
   line-height: 1.1;
   margin: 0;
+  max-width: 15ch;
 }
 
+#kc-form-login > div,
+#kc-register-form > div,
+#kc-reset-password-form > div,
+.form-group,
+.pf-c-form__group,
+.pf-v5-c-form__group {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+#kc-form-login > div:last-child,
+#kc-register-form > div:last-child,
+#kc-reset-password-form > div:last-child {
+  margin-bottom: 0;
+}
+
+.control-label,
 .pf-c-form__label,
 .pf-v5-c-form__label,
 .pf-v5-c-form__label-text,
-.control-label,
 label {
   color: var(--checknote-text);
-  font-weight: 700;
+  display: inline-block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin-bottom: 8px;
 }
 
 .pf-c-form-control,
-.pf-v5-c-form-control {
+.pf-v5-c-form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
   background: #ffffff;
   border: 1px solid var(--checknote-input-border);
   border-radius: 6px;
   color: var(--checknote-text);
   font: inherit;
-  min-height: 44px;
+  height: auto;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 12px;
+  width: 100%;
 }
 
 .pf-v5-c-form-control > input,
-input[type="text"],
-input[type="email"],
-input[type="password"] {
+.pf-c-form-control > input {
+  border: 0;
+  min-height: 46px;
+  outline: 0;
+  padding: 0 12px;
+}
+
+.input-group,
+.pf-c-input-group,
+.pf-v5-c-input-group,
+#kc-form-login div[dir="ltr"],
+#kc-register-form div[dir="ltr"],
+#kc-passwd-update-form div[dir="ltr"],
+#kc-form-login div:has(> input[type="password"] + button),
+#kc-form-login div:has(> input[type="password"] ~ button),
+#kc-register-form div:has(> input[type="password"] + button),
+#kc-register-form div:has(> input[type="password"] ~ button),
+#kc-passwd-update-form div:has(> input[type="password"] + button),
+#kc-passwd-update-form div:has(> input[type="password"] ~ button) {
+  align-items: stretch;
+  display: flex;
+  width: 100%;
+}
+
+.input-group input[type="password"],
+.pf-c-input-group input[type="password"],
+.pf-v5-c-input-group input[type="password"],
+.input-group .pf-c-form-control,
+.pf-c-input-group .pf-c-form-control,
+.pf-v5-c-input-group .pf-v5-c-form-control,
+#kc-form-login div[dir="ltr"] input[type="password"],
+#kc-register-form div[dir="ltr"] input[type="password"],
+#kc-passwd-update-form div[dir="ltr"] input[type="password"],
+#kc-form-login div:has(> input[type="password"] + button) > input[type="password"],
+#kc-form-login div:has(> input[type="password"] ~ button) > input[type="password"],
+#kc-register-form div:has(> input[type="password"] + button) > input[type="password"],
+#kc-register-form div:has(> input[type="password"] ~ button) > input[type="password"],
+#kc-passwd-update-form div:has(> input[type="password"] + button) > input[type="password"],
+#kc-passwd-update-form div:has(> input[type="password"] ~ button) > input[type="password"] {
+  border-bottom-right-radius: 0;
+  border-right: 0;
+  border-top-right-radius: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.input-group button,
+.pf-c-input-group .pf-c-button,
+.pf-v5-c-input-group .pf-v5-c-button,
+#password-show,
+#kc-form-login div[dir="ltr"] button,
+#kc-register-form div[dir="ltr"] button,
+#kc-passwd-update-form div[dir="ltr"] button,
+#kc-form-login div:has(> input[type="password"] + button) > button,
+#kc-form-login div:has(> input[type="password"] ~ button) > button,
+#kc-register-form div:has(> input[type="password"] + button) > button,
+#kc-register-form div:has(> input[type="password"] ~ button) > button,
+#kc-passwd-update-form div:has(> input[type="password"] + button) > button,
+#kc-passwd-update-form div:has(> input[type="password"] ~ button) > button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--checknote-input-border);
+  border-radius: 0 6px 6px 0;
   color: var(--checknote-text);
-  font: inherit;
-  min-height: 42px;
-  padding: 10px 12px;
+  display: inline-flex;
+  flex: 0 0 52px;
+  font-size: 0;
+  height: 48px;
+  justify-content: center;
+  margin: 0;
+  min-height: 48px;
+  padding: 0;
+  width: 52px;
+}
+
+#password-show::before,
+#kc-form-login div[dir="ltr"] button::before,
+#kc-register-form div[dir="ltr"] button::before,
+#kc-passwd-update-form div[dir="ltr"] button::before,
+#kc-form-login div:has(> input[type="password"] + button) > button::before,
+#kc-form-login div:has(> input[type="password"] ~ button) > button::before,
+#kc-register-form div:has(> input[type="password"] + button) > button::before,
+#kc-register-form div:has(> input[type="password"] ~ button) > button::before,
+#kc-passwd-update-form div:has(> input[type="password"] + button) > button::before,
+#kc-passwd-update-form div:has(> input[type="password"] ~ button) > button::before {
+  background-color: currentColor;
+  content: "";
+  display: block;
+  height: 20px;
+  -webkit-mask: var(--checknote-eye-icon) center / contain no-repeat;
+  mask: var(--checknote-eye-icon) center / contain no-repeat;
+  width: 20px;
+}
+
+#kc-form-login div[dir="ltr"] button i,
+#kc-register-form div[dir="ltr"] button i,
+#kc-passwd-update-form div[dir="ltr"] button i,
+#kc-form-login div[dir="ltr"] button svg,
+#kc-register-form div[dir="ltr"] button svg,
+#kc-passwd-update-form div[dir="ltr"] button svg {
+  display: none;
 }
 
 .pf-c-form-control:focus,
@@ -155,46 +330,68 @@ input[type="email"]:focus,
 input[type="password"]:focus,
 button:focus-visible,
 a:focus-visible {
+  border-color: var(--checknote-primary);
   box-shadow: 0 0 0 3px rgba(157, 184, 223, 0.55);
   outline: 2px solid var(--checknote-focus);
   outline-offset: 1px;
 }
 
-.pf-c-button.pf-m-primary,
-.pf-v5-c-button.pf-m-primary,
+button,
+.button,
+input[type="button"],
+input[type="submit"],
+.btn,
+.pf-c-button,
+.pf-v5-c-button {
+  font: inherit;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+#kc-form-buttons {
+  margin-top: 8px;
+  width: 100%;
+}
+
 #kc-login,
-#kc-form-buttons input[type="submit"] {
+#kc-form-buttons input[type="submit"],
+.btn-primary,
+.pf-c-button.pf-m-primary,
+.pf-v5-c-button.pf-m-primary {
+  align-items: center;
   background: var(--checknote-primary);
   border: 1px solid var(--checknote-primary);
   border-radius: 6px;
   color: #ffffff;
   cursor: pointer;
-  font: inherit;
-  font-weight: 700;
-  min-height: 44px;
+  display: inline-flex;
+  font-size: 1.5rem;
+  font-weight: 800;
+  height: auto;
+  justify-content: center;
+  margin: 0;
+  min-height: 48px;
+  padding: 0 18px;
+  width: 100%;
 }
 
-.pf-c-button.pf-m-primary:hover,
-.pf-v5-c-button.pf-m-primary:hover,
 #kc-login:hover,
-#kc-form-buttons input[type="submit"]:hover {
+#kc-form-buttons input[type="submit"]:hover,
+.btn-primary:hover,
+.pf-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:hover {
   background: var(--checknote-primary-hover);
-}
-
-.pf-c-button.pf-m-control,
-.pf-v5-c-button.pf-m-control {
-  background: #ffffff;
-  border-color: var(--checknote-input-border);
-  border-radius: 6px;
-  color: var(--checknote-text);
-  min-height: 44px;
+  border-color: var(--checknote-primary-hover);
+  color: #ffffff;
 }
 
 a,
 .login-pf a,
 .pf-v5-c-login a {
   color: var(--checknote-primary);
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 a:hover,
@@ -204,59 +401,129 @@ a:hover,
 }
 
 #kc-info,
+#kc-registration,
+#kc-registration-container,
+.login-pf-signup {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+#kc-info-wrapper,
 .login-pf-signup {
   background: var(--checknote-accent-bg);
   border-radius: 8px;
   color: var(--checknote-accent);
-  font-weight: 700;
-  margin: 20px 28px 28px;
-  padding: 14px;
+  font-weight: 800;
+  margin: 24px auto 0;
+  padding: 16px;
+  text-align: center;
+  width: min(100%, 430px);
+}
+
+#kc-info-wrapper:empty,
+#kc-info:empty,
+#kc-registration:empty,
+.login-pf-signup:empty {
+  display: none;
 }
 
 .pf-v5-c-login__main-footer {
-  display: none;
-}
-
-.pf-v5-c-login__main-footer:has(a),
-.pf-v5-c-login__main-footer:has(p),
-.pf-v5-c-login__main-footer:has(#kc-registration),
-.pf-v5-c-login__main-footer:has(#kc-info-wrapper) {
-  background: var(--checknote-accent-bg);
-  border-radius: 8px;
-  color: var(--checknote-accent);
-  display: block;
-  font-weight: 700;
-  margin: 20px 28px 28px;
-  padding: 14px;
-}
-
-#kc-info:empty {
-  display: none;
+  margin-top: 0;
+  padding: 0;
 }
 
 #kc-form-options,
-#kc-registration,
-#kc-reset-password-form,
 #kc-terms-text,
-.instruction {
+.instruction,
+.subtitle,
+.login-pf-header p {
   color: var(--checknote-soft-muted);
 }
 
+.alert,
 .pf-c-alert,
 .pf-v5-c-alert {
   border-radius: 8px;
+  margin-bottom: 18px;
 }
 
-@media (max-width: 560px) {
-  .pf-v5-c-login__container,
-  .login-pf-page {
-    padding: 20px 16px;
+.alert-error,
+.pf-m-danger,
+.pf-v5-c-alert.pf-m-danger {
+  color: var(--checknote-danger);
+}
+
+#input-error,
+.pf-c-form__helper-text.pf-m-error,
+.pf-v5-c-form__helper-text.pf-m-error,
+.kc-feedback-text,
+input[aria-invalid="true"] + span {
+  color: var(--checknote-danger);
+  display: block;
+  font-size: 1.35rem;
+  margin-top: 6px;
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--checknote-danger);
+}
+
+.required {
+  color: var(--checknote-danger);
+}
+
+@media (max-width: 600px) {
+  body[data-page-id] > div,
+  .login-pf-page,
+  .pf-v5-c-login,
+  .pf-v5-c-login__container {
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 22px 12px;
   }
 
-  .pf-v5-c-login__main-header,
-  .pf-v5-c-login__main-body,
-  .pf-v5-c-login__main-footer {
-    padding-left: 20px;
-    padding-right: 20px;
+  #kc-header,
+  .login-pf-page-header,
+  .pf-v5-c-login__header,
+  body[data-page-id] > div > div:not(#kc-header),
+  .card-pf,
+  .pf-v5-c-login__main {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: none;
+    padding: 24px 18px;
+    width: 100%;
+  }
+
+  #kc-header,
+  .login-pf-page-header,
+  .pf-v5-c-login__header {
+    padding: 0;
+  }
+
+  #kc-header-wrapper,
+  .kc-logo-text,
+  .pf-v5-c-brand {
+    font-size: 0;
+  }
+
+  #kc-header-wrapper::before,
+  .kc-logo-text::before,
+  .pf-v5-c-brand::before {
+    font-size: 2rem;
+  }
+
+  #kc-page-title,
+  .login-pf-header h1,
+  .pf-v5-c-title {
+    font-size: 2.5rem;
+    max-width: 15ch;
+  }
+
+  #kc-info-wrapper,
+  .login-pf-signup {
+    width: 100%;
   }
 }

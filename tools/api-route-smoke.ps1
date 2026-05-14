@@ -173,6 +173,38 @@ function Assert-OpenApiRequestBodyContent {
     }
 }
 
+function Get-WebErrorBody {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object] $ErrorRecord
+    )
+
+    if ($ErrorRecord.ErrorDetails.Message) {
+        return $ErrorRecord.ErrorDetails.Message
+    }
+
+    $response = $ErrorRecord.Exception.Response
+
+    if (-not $response) {
+        return ''
+    }
+
+    $stream = $response.GetResponseStream()
+
+    if (-not $stream) {
+        return ''
+    }
+
+    $reader = [System.IO.StreamReader]::new($stream)
+
+    try {
+        return $reader.ReadToEnd()
+    }
+    finally {
+        $reader.Dispose()
+    }
+}
+
 try {
     $env:ASPNETCORE_ENVIRONMENT = 'Production'
     $proc = Start-Process -FilePath $apiExe -WorkingDirectory $smokeDir -WindowStyle Hidden -PassThru
@@ -220,6 +252,27 @@ try {
         throw "Expected SPA fallback to serve index.html with no-cache headers, got: $fallbackCache"
     }
 
+    $browser404Status = $null
+    $browser404Body = ''
+
+    try {
+        $browser404 = Invoke-WebRequest -Uri "$base/test-backend-errors/throw-404" -Headers @{ Accept = 'text/html' } -UseBasicParsing -TimeoutSec 5
+        $browser404Status = $browser404.StatusCode
+        $browser404Body = $browser404.Content
+    }
+    catch {
+        $browser404Status = $_.Exception.Response.StatusCode.value__
+        $browser404Body = Get-WebErrorBody -ErrorRecord $_
+    }
+
+    if ($browser404Status -ne 404) {
+        throw "Expected browser test 404 route to return 404, got $browser404Status."
+    }
+
+    if ($browser404Body -notmatch 'friendly-error-test-pattern') {
+        throw 'Expected browser test 404 route to return the friendly HTML page.'
+    }
+
     try {
         Invoke-WebRequest -Uri "$base/api/missing" -UseBasicParsing -TimeoutSec 5 | Out-Null
         throw 'Expected unknown API route to return 404.'
@@ -239,7 +292,7 @@ try {
             throw
         }
 
-        $body = $_.ErrorDetails.Message
+        $body = Get-WebErrorBody -ErrorRecord $_
 
         if ($body -match 'friendly-error-test-pattern') {
             throw 'Expected test API 404 route not to return the friendly HTML page.'

@@ -26,6 +26,7 @@ public static class ChecknoteApi
     public const string HelloWorldRoute = "/hello-world";
     public const string HelloWorldResponse = "Hello from Checknote API";
     public const string TestNotFoundRoute = "/api/test-errors/throw-404";
+    public const string BrowserTestNotFoundRoute = "/test-backend-errors/throw-404";
     public const string EnableSwaggerVariable = "CHECKNOTE_ENABLE_SWAGGER";
     private const string MediatRLicenseLogCategory = "LuckyPennySoftware.MediatR.License";
 
@@ -149,6 +150,13 @@ public static class ChecknoteApi
             .Produces(StatusCodes.Status404NotFound);
 
         app.MapGet(
+                BrowserTestNotFoundRoute,
+                () => Results.NotFound())
+            .WithName("BrowserThrowTest404")
+            .WithTags("System")
+            .Produces(StatusCodes.Status404NotFound);
+
+        app.MapGet(
                 "/health",
                 () => Results.Ok(new HealthResponse("checknote-api", "ok")))
             .WithName("Health")
@@ -181,6 +189,7 @@ public static class ChecknoteApi
                 context.Response.StatusCode != StatusCodes.Status404NotFound ||
                 context.Request.Path.StartsWithSegments("/api") ||
                 context.Request.Path.StartsWithSegments("/swagger") ||
+                context.Request.Path.StartsWithSegments("/test-backend-errors") ||
                 Path.HasExtension(context.Request.Path))
             {
                 return;

@@ -10,6 +10,7 @@ public static class ErrorResponsePolicy
     public const string ErrorAssetsRequestPath = "/error-assets";
     public const string ErrorPageFileName = "error.html";
     public const string ErrorPagesDirectoryName = "ErrorPages";
+    public const string NoCacheHeader = "no-cache, no-store, must-revalidate";
 
     public static bool ShouldServeFriendlyErrorPage(HttpRequest request)
     {

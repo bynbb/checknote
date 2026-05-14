@@ -231,6 +231,22 @@ try {
     }
 
     try {
+        Invoke-WebRequest -Uri "$base/api/test-errors/throw-404" -Headers @{ Accept = 'text/html' } -UseBasicParsing -TimeoutSec 5 | Out-Null
+        throw 'Expected test API 404 route to return 404.'
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 404) {
+            throw
+        }
+
+        $body = $_.ErrorDetails.Message
+
+        if ($body -match 'friendly-error-test-pattern') {
+            throw 'Expected test API 404 route not to return the friendly HTML page.'
+        }
+    }
+
+    try {
         Invoke-WebRequest -Uri "$base/swagger/index.html" -UseBasicParsing -TimeoutSec 5 | Out-Null
         throw 'Expected Swagger UI to be unavailable without an explicit enablement setting.'
     }

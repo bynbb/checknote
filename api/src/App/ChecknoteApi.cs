@@ -25,6 +25,7 @@ public static class ChecknoteApi
 {
     public const string HelloWorldRoute = "/hello-world";
     public const string HelloWorldResponse = "Hello from Checknote API";
+    public const string TestNotFoundRoute = "/api/test-errors/throw-404";
     public const string EnableSwaggerVariable = "CHECKNOTE_ENABLE_SWAGGER";
     private const string MediatRLicenseLogCategory = "LuckyPennySoftware.MediatR.License";
 
@@ -59,6 +60,29 @@ public static class ChecknoteApi
         }
 
         app.UseExceptionHandler();
+        app.UseStatusCodePages(async statusCodeContext =>
+        {
+            HttpContext httpContext = statusCodeContext.HttpContext;
+
+            if (!ErrorResponsePolicy.ShouldServeFriendlyErrorPage(httpContext.Request))
+            {
+                return;
+            }
+
+            string errorPagePath = ErrorResponsePolicy.GetErrorPagePath(app.Environment);
+
+            if (!File.Exists(errorPagePath))
+            {
+                return;
+            }
+
+            httpContext.Response.ContentType = "text/html; charset=utf-8";
+            httpContext.Response.Headers.CacheControl = ErrorResponsePolicy.NoCacheHeader;
+            httpContext.Response.Headers.Pragma = "no-cache";
+            httpContext.Response.Headers.Expires = "0";
+
+            await httpContext.Response.SendFileAsync(errorPagePath);
+        });
         app.UseSerilogRequestLogging(options =>
         {
             options.MessageTemplate = SerilogRequestLogPolicy.MessageTemplate;
@@ -116,6 +140,13 @@ public static class ChecknoteApi
             .WithName("HelloWorld")
             .WithTags("System")
             .Produces<string>(StatusCodes.Status200OK, "text/plain");
+
+        app.MapGet(
+                TestNotFoundRoute,
+                () => Results.NotFound())
+            .WithName("ThrowTest404")
+            .WithTags("System")
+            .Produces(StatusCodes.Status404NotFound);
 
         app.MapGet(
                 "/health",

@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -70,6 +71,7 @@ public static class ChecknoteApi
                 diagnosticContext.Set("ChecknoteArea", SerilogRequestLogPolicy.GetArea(httpContext.Request.Path));
             };
         });
+        MapErrorPageAssets(app);
         app.UseAuthentication();
         app.UseAuthorization();
         MapApiRoutes(app);
@@ -164,6 +166,24 @@ public static class ChecknoteApi
             context.Response.ContentType = "text/html";
             ApplyStaticFileCachePolicy(context.Response, "index.html");
             await context.Response.SendFileAsync(indexPath);
+        });
+    }
+
+    private static void MapErrorPageAssets(WebApplication app)
+    {
+        string errorPagesPath = ErrorResponsePolicy.GetErrorPagesPath(app.Environment);
+
+        if (!Directory.Exists(errorPagesPath))
+        {
+            return;
+        }
+
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(errorPagesPath),
+            RequestPath = ErrorResponsePolicy.ErrorAssetsRequestPath,
+            OnPrepareResponse = context =>
+                ApplyStaticFileCachePolicy(context.Context.Response, context.File.Name),
         });
     }
 

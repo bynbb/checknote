@@ -21,6 +21,9 @@ Expand-Archive -Path $resolvedSiteZip -DestinationPath $smokeDir -Force
 
 $apiExe = Join-Path $smokeDir 'checknote_api.exe'
 $indexPath = Join-Path $smokeDir 'wwwroot\index.html'
+$errorPagePath = Join-Path $smokeDir 'ErrorPages\error.html'
+$errorPatternPath = Join-Path $smokeDir 'ErrorPages\friendly-error-test-pattern.png'
+$errorBarsPath = Join-Path $smokeDir 'ErrorPages\smpte-color-bars.png'
 
 if (!(Test-Path -LiteralPath $apiExe)) {
     throw "Expected checknote_api.exe was not found at $apiExe"
@@ -28,6 +31,18 @@ if (!(Test-Path -LiteralPath $apiExe)) {
 
 if (!(Test-Path -LiteralPath $indexPath)) {
     throw "Expected wwwroot/index.html was not found at $indexPath"
+}
+
+if (!(Test-Path -LiteralPath $errorPagePath)) {
+    throw "Expected ErrorPages/error.html was not found at $errorPagePath"
+}
+
+if (!(Test-Path -LiteralPath $errorPatternPath)) {
+    throw "Expected ErrorPages/friendly-error-test-pattern.png was not found at $errorPatternPath"
+}
+
+if (!(Test-Path -LiteralPath $errorBarsPath)) {
+    throw "Expected ErrorPages/smpte-color-bars.png was not found at $errorBarsPath"
 }
 
 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
@@ -184,6 +199,18 @@ try {
 
     if ($scriptCache -notmatch 'immutable') {
         throw "Expected hashed JavaScript asset to be immutable, got: $scriptCache"
+    }
+
+    $errorPattern = Invoke-WebRequest -Uri "$base/error-assets/friendly-error-test-pattern.png" -UseBasicParsing -TimeoutSec 5
+
+    if ($errorPattern.StatusCode -ne 200 -or [string] $errorPattern.Headers['Content-Type'] -notmatch 'image/png') {
+        throw "Expected friendly error test pattern asset to be served as PNG, got: status=$($errorPattern.StatusCode) contentType=$($errorPattern.Headers['Content-Type'])"
+    }
+
+    $errorBars = Invoke-WebRequest -Uri "$base/error-assets/smpte-color-bars.png" -UseBasicParsing -TimeoutSec 5
+
+    if ($errorBars.StatusCode -ne 200 -or [string] $errorBars.Headers['Content-Type'] -notmatch 'image/png') {
+        throw "Expected friendly error SMPTE asset to be served as PNG, got: status=$($errorBars.StatusCode) contentType=$($errorBars.Headers['Content-Type'])"
     }
 
     $fallback = Invoke-WebRequest -Uri "$base/client/route" -UseBasicParsing -TimeoutSec 5

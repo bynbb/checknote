@@ -4,6 +4,7 @@ using System;
 using System.Threading.Tasks;
 using Checknote.Api.UnitTests.App.Authorization;
 using Checknote.Api.UnitTests.App.Authentication;
+using Checknote.Api.UnitTests.App.Middleware;
 using Checknote.Api.UnitTests.Common.Presentation.Endpoints;
 using Checknote.Api.UnitTests.Modules.Database;
 using Checknote.Api.UnitTests.Modules.Todos.Application;
@@ -48,6 +49,7 @@ internal static class Program
         JwtBearerConfigureOptionsTests.Run();
         await GetCurrentUserQueryHandlerTests.Run();
         AuthenticatedCurrentUserProviderTests.Run();
+        ErrorResponsePolicyTests.Run();
         await EndpointRegistrationExtensionsTests.Run();
         await SchemaBoundaryTests.Run();
         await ApiAuthorizationTests.Run();

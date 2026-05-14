@@ -85,6 +85,9 @@ genrule(
     srcs = [
         ":checknote_api_zip",
         "//cdev:todo_app",
+        "ErrorPages/error.html",
+        "ErrorPages/friendly-error-test-pattern.png",
+        "ErrorPages/smpte-color-bars.png",
     ],
     outs = ["checknote-site.zip"],
     cmd = """
@@ -94,18 +97,22 @@ OUT_DIR="$$(pwd)/$(@D)"
 SITE_DIR="$$OUT_DIR/checknote-site"
 FRONTEND_DIR="$$OUT_DIR/checknote-frontend"
 rm -rf "$$SITE_DIR" "$$FRONTEND_DIR"
-mkdir -p "$$SITE_DIR/wwwroot" "$$FRONTEND_DIR"
+mkdir -p "$$SITE_DIR/wwwroot" "$$SITE_DIR/ErrorPages" "$$FRONTEND_DIR"
 unzip -q "$(location :checknote_api_zip)" -d "$$SITE_DIR"
 unzip -q "$(location //cdev:todo_app)" -d "$$FRONTEND_DIR"
 test -f "$$FRONTEND_DIR/browser/index.html"
 cp -R "$$FRONTEND_DIR/browser/." "$$SITE_DIR/wwwroot/"
+cp "$(location ErrorPages/error.html)" "$$SITE_DIR/ErrorPages/error.html"
+cp "$(location ErrorPages/friendly-error-test-pattern.png)" "$$SITE_DIR/ErrorPages/friendly-error-test-pattern.png"
+cp "$(location ErrorPages/smpte-color-bars.png)" "$$SITE_DIR/ErrorPages/smpte-color-bars.png"
 test -f "$$SITE_DIR/web.config"
 test -f "$$SITE_DIR/wwwroot/index.html"
+test -f "$$SITE_DIR/ErrorPages/error.html"
 cd "$$SITE_DIR"
 zip -qr "$$OUT" .
 """,
     cmd_bat = """
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = (Resolve-Path '$(@D)').Path; $$out = Join-Path $$outDir 'checknote-site.zip'; $$siteDir = Join-Path $$outDir 'checknote-site'; $$frontendDir = Join-Path $$outDir 'checknote-frontend'; Remove-Item -LiteralPath $$siteDir, $$frontendDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force -Path (Join-Path $$siteDir 'wwwroot'), $$frontendDir | Out-Null; Expand-Archive -Path '$(location :checknote_api_zip)' -DestinationPath $$siteDir -Force; Expand-Archive -Path '$(location //cdev:todo_app)' -DestinationPath $$frontendDir -Force; if (!(Test-Path (Join-Path $$frontendDir 'browser\\index.html'))) { throw 'Expected Angular index.html was not found.' }; Copy-Item -Path (Join-Path $$frontendDir 'browser\\*') -Destination (Join-Path $$siteDir 'wwwroot') -Recurse -Force; if (!(Test-Path (Join-Path $$siteDir 'web.config'))) { throw 'Expected API web.config was not found.' }; if (!(Test-Path (Join-Path $$siteDir 'wwwroot\\index.html'))) { throw 'Expected merged wwwroot/index.html was not found.' }; Compress-Archive -Path (Join-Path $$siteDir '*') -DestinationPath $$out -Force"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$$ErrorActionPreference = 'Stop'; $$outDir = (Resolve-Path '$(@D)').Path; $$out = Join-Path $$outDir 'checknote-site.zip'; $$siteDir = Join-Path $$outDir 'checknote-site'; $$frontendDir = Join-Path $$outDir 'checknote-frontend'; $$errorPagesDir = Join-Path $$siteDir 'ErrorPages'; Remove-Item -LiteralPath $$siteDir, $$frontendDir -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force -Path (Join-Path $$siteDir 'wwwroot'), $$errorPagesDir, $$frontendDir | Out-Null; Expand-Archive -Path '$(location :checknote_api_zip)' -DestinationPath $$siteDir -Force; Expand-Archive -Path '$(location //cdev:todo_app)' -DestinationPath $$frontendDir -Force; if (!(Test-Path (Join-Path $$frontendDir 'browser\\index.html'))) { throw 'Expected Angular index.html was not found.' }; Copy-Item -Path (Join-Path $$frontendDir 'browser\\*') -Destination (Join-Path $$siteDir 'wwwroot') -Recurse -Force; Copy-Item -LiteralPath '$(location ErrorPages/error.html)' -Destination (Join-Path $$errorPagesDir 'error.html') -Force; Copy-Item -LiteralPath '$(location ErrorPages/friendly-error-test-pattern.png)' -Destination (Join-Path $$errorPagesDir 'friendly-error-test-pattern.png') -Force; Copy-Item -LiteralPath '$(location ErrorPages/smpte-color-bars.png)' -Destination (Join-Path $$errorPagesDir 'smpte-color-bars.png') -Force; if (!(Test-Path (Join-Path $$siteDir 'web.config'))) { throw 'Expected API web.config was not found.' }; if (!(Test-Path (Join-Path $$siteDir 'wwwroot\\index.html'))) { throw 'Expected merged wwwroot/index.html was not found.' }; if (!(Test-Path (Join-Path $$errorPagesDir 'error.html'))) { throw 'Expected ErrorPages/error.html was not found.' }; Compress-Archive -Path (Join-Path $$siteDir '*') -DestinationPath $$out -Force"
 """,
 )
 

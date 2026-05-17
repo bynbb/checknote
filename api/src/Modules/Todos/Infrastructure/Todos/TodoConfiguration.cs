@@ -24,5 +24,8 @@ public sealed class TodoConfiguration : IEntityTypeConfiguration<Todo>
         builder.Property(todo => todo.IsCompleted)
             .HasColumnName("Completed")
             .IsRequired();
+
+        builder.Property(todo => todo.Embedding)
+            .HasColumnType("vector(3)");
     }
 }

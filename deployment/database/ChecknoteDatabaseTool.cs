@@ -33,37 +33,45 @@ public static class ChecknoteDatabaseTool
 
         string environment = Environment.GetEnvironmentVariable(EnvironmentVariable) ?? "local";
 
-        DbContextOptions<UsersDbContext> usersOptions = new DbContextOptionsBuilder<UsersDbContext>()
-            .UseSqlServer(
-                connectionString,
-                sqlServerOptions => sqlServerOptions.MigrationsHistoryTable(
-                    HistoryRepository.DefaultTableName,
-                    UsersSchemas.Users))
-            .Options;
-
-        output.WriteLine($"Applying Users database model to {environment}.");
-        using (UsersDbContext usersDbContext = new(usersOptions))
+        try
         {
-            Migrate(usersDbContext, "Users");
+            DbContextOptions<UsersDbContext> usersOptions = new DbContextOptionsBuilder<UsersDbContext>()
+                .UseSqlServer(
+                    connectionString,
+                    sqlServerOptions => sqlServerOptions.MigrationsHistoryTable(
+                        HistoryRepository.DefaultTableName,
+                        UsersSchemas.Users))
+                .Options;
+
+            output.WriteLine($"Applying Users database model to {environment}.");
+            using (UsersDbContext usersDbContext = new(usersOptions))
+            {
+                Migrate(usersDbContext, "Users");
+            }
+            output.WriteLine("Users database model applied.");
+
+            DbContextOptions<TodosDbContext> todosOptions = new DbContextOptionsBuilder<TodosDbContext>()
+                .UseSqlServer(
+                    connectionString,
+                    sqlServerOptions => sqlServerOptions.MigrationsHistoryTable(
+                        HistoryRepository.DefaultTableName,
+                        TodosSchemas.Todos))
+                .Options;
+
+            output.WriteLine($"Applying Todos database model to {environment}.");
+            using (TodosDbContext todosDbContext = new(todosOptions))
+            {
+                Migrate(todosDbContext, "Todos");
+            }
+            output.WriteLine("Todos database model applied.");
+
+            return 0;
         }
-        output.WriteLine("Users database model applied.");
-
-        DbContextOptions<TodosDbContext> todosOptions = new DbContextOptionsBuilder<TodosDbContext>()
-            .UseSqlServer(
-                connectionString,
-                sqlServerOptions => sqlServerOptions.MigrationsHistoryTable(
-                    HistoryRepository.DefaultTableName,
-                    TodosSchemas.Todos))
-            .Options;
-
-        output.WriteLine($"Applying Todos database model to {environment}.");
-        using (TodosDbContext todosDbContext = new(todosOptions))
+        catch (Exception exception)
         {
-            Migrate(todosDbContext, "Todos");
+            error.WriteLine(exception);
+            return 1;
         }
-        output.WriteLine("Todos database model applied.");
-
-        return 0;
     }
 
     private static void Migrate(DbContext dbContext, string moduleName)

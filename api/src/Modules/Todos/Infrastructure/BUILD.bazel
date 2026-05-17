@@ -8,6 +8,7 @@ checknote_csharp_library(
     deps = [
         "//api/src/Modules/Todos/Application:application",
         "//api/src/Modules/Todos/Domain:domain",
+        "@paket.main//microsoft.data.sqlclient",
         "@paket.main//microsoft.entityframeworkcore",
         "@paket.main//microsoft.entityframeworkcore.relational",
         "@paket.main//microsoft.entityframeworkcore.sqlserver",

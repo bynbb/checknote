@@ -6,7 +6,7 @@ storage: none
 
 nuget ChilkatDnCore 11.4.0
 nuget FluentValidation.DependencyInjectionExtensions 12.1.1
-nuget Microsoft.AspNetCore.Authentication.JwtBearer 9.0.15
+nuget Microsoft.AspNetCore.Authentication.JwtBearer 10.0.8
 nuget Microsoft.EntityFrameworkCore.SqlServer 10.0.8
 nuget MediatR 14.1.0
 nuget Serilog.AspNetCore 9.0.0

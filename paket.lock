@@ -26,7 +26,7 @@ NUGET
       Microsoft.Extensions.Logging.Abstractions (>= 10.0)
       Microsoft.IdentityModel.JsonWebTokens (>= 8.14)
     MediatR.Contracts (2.0.1)
-    Microsoft.AspNetCore.Authentication.JwtBearer (9.0.15)
+    Microsoft.AspNetCore.Authentication.JwtBearer (10.0.8)
       Microsoft.IdentityModel.Protocols.OpenIdConnect (>= 8.0.1)
     Microsoft.Bcl.AsyncInterfaces (8.0)
     Microsoft.Bcl.Cryptography (9.0.4)

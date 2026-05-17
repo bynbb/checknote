@@ -16,6 +16,6 @@ checknote_csharp_library(
         "@paket.main//microsoft.extensions.logging.abstractions",
     ],
     out = "Checknote.Common.Application",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api:common_application_consumers"],
 )

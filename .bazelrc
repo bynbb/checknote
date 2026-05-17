@@ -1,3 +1,5 @@
+try-import %workspace%/.bazelrc.local
+
 build --color=yes
 build --verbose_failures
 startup --nowindows_enable_symlinks

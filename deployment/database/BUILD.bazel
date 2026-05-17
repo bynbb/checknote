@@ -15,21 +15,21 @@ checknote_csharp_library(
         "@paket.main//microsoft.entityframeworkcore.sqlserver",
     ],
     out = "Checknote.Deployment.Database",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
 )
 
 checknote_csharp_binary(
     name = "checknote_db_tool",
     srcs = ["Program.cs"],
     deps = [":db_tool_lib"],
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
 )
 
 publish_binary(
     name = "checknote_db_tool_publish",
     binary = ":checknote_db_tool",
     self_contained = True,
-    target_framework = "net9.0",
+    target_framework = "net10.0",
 )
 
 pkg_zip(

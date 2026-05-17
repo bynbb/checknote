@@ -1,6 +1,8 @@
 node_modules/
 .angular/
 .idea/
+.bazel-cache/
+.bazelrc.local
 
 bazel-*
 *.log

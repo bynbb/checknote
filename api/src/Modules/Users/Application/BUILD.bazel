@@ -12,6 +12,6 @@ checknote_csharp_library(
         "@paket.main//mediatr.contracts",
     ],
     out = "Checknote.Modules.Users.Application",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api:users_application_consumers"],
 )

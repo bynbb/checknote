@@ -8,6 +8,6 @@ checknote_csharp_library(
     deps = ["//api/src/Common/Domain:domain"],
     out = "Checknote.Common.Presentation",
     project_sdk = "web",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api:common_presentation_consumers"],
 )

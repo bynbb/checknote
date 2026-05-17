@@ -13,6 +13,6 @@ checknote_csharp_library(
         "@paket.main//microsoft.entityframeworkcore.sqlserver",
     ],
     out = "Checknote.Modules.Todos.Infrastructure",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api:todos_infrastructure_consumers"],
 )

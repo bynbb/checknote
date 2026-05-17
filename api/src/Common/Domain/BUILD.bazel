@@ -6,6 +6,6 @@ checknote_csharp_library(
     name = "domain",
     srcs = glob(["**/*.cs"]),
     out = "Checknote.Common.Domain",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api:common_domain_consumers"],
 )

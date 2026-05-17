@@ -12,14 +12,14 @@ checknote_csharp_binary(
         "@paket.main//chilkatnativelib",
     ],
     out = "Checknote.AuthSmoke",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
 )
 
 publish_binary(
     name = "auth_smoke_tool_publish",
     binary = ":auth_smoke_tool",
     self_contained = True,
-    target_framework = "net9.0",
+    target_framework = "net10.0",
 )
 
 pkg_zip(

@@ -16,6 +16,6 @@ checknote_csharp_library(
     out = "Checknote.Modules.Users.Presentation",
     project_sdk = "web",
     run_analyzers = False,
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api:users_presentation_consumers"],
 )

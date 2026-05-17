@@ -10,7 +10,7 @@ checknote_csharp_library(
     deps = [],
     out = "Checknote.Api.Logging",
     project_sdk = "web",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
     visibility = ["//api/test/unit:__pkg__"],
 )
 
@@ -49,7 +49,7 @@ checknote_csharp_library(
     ],
     out = "Checknote.Api",
     project_sdk = "web",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
 )
 
 checknote_csharp_binary(
@@ -61,14 +61,14 @@ checknote_csharp_binary(
     ],
     deps = [":api_lib"],
     project_sdk = "web",
-    target_frameworks = ["net9.0"],
+    target_frameworks = ["net10.0"],
 )
 
 publish_binary(
     name = "checknote_api_publish",
     binary = ":checknote_api",
     self_contained = False,
-    target_framework = "net9.0",
+    target_framework = "net10.0",
 )
 
 pkg_zip(

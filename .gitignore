@@ -3,6 +3,7 @@ node_modules/
 .idea/
 .bazel-cache/
 .bazelrc.local
+.tmp/
 
 bazel-*
 *.log
@@ -20,4 +21,4 @@ TestResults/
 *.nupkg
 *.snupkg
 
-pm/
+hks/

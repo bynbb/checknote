@@ -28,15 +28,15 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          $trackedPmFiles = @(git ls-files 'pm/**')
-          if ($trackedPmFiles.Count -gt 0) {
-            throw "The pm/ folder must not be tracked. Files found: $($trackedPmFiles -join ', ')"
+          $trackedHksFiles = @(git ls-files 'hks/**')
+          if ($trackedHksFiles.Count -gt 0) {
+            throw "The hks/ folder must not be tracked. Files found: $($trackedHksFiles -join ', ')"
           }
 
-          $pmHistory = @(git log --all --name-only --pretty=format: -- pm | Where-Object { $_ })
-          if ($pmHistory.Count -gt 0) {
-            $uniquePmHistory = @($pmHistory | Sort-Object -Unique)
-            throw "The pm/ folder must not appear in branch history. Files found: $($uniquePmHistory -join ', ')"
+          $hksHistory = @(git log --all --name-only --pretty=format: -- hks | Where-Object { $_ })
+          if ($hksHistory.Count -gt 0) {
+            $uniqueHksHistory = @($hksHistory | Sort-Object -Unique)
+            throw "The hks/ folder must not appear in branch history. Files found: $($uniqueHksHistory -join ', ')"
           }
 
           $allowedAgentFiles = @('AGENTS.md')

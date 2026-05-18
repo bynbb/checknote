@@ -62,6 +62,16 @@ internal static class MediatRDispatchTests
         TestAssert.Equal(3, savedTodo.Id, "SaveTaskListCommand saved todo id");
         TestAssert.Equal("Replace through CQRS", savedTodo.Title, "SaveTaskListCommand saved todo title");
         TestAssert.Equal(false, savedTodo.IsCompleted, "SaveTaskListCommand saved todo completion state");
+        TestAssert.True(savedTodo.Embedding.HasValue, "SaveTaskListCommand should populate a todo vector.");
+        Microsoft.Data.SqlTypes.SqlVector<float> savedVector = savedTodo.Embedding.GetValueOrDefault();
+        TestAssert.Equal(3, savedVector.Length, "SaveTaskListCommand todo vector length");
+
+        Todo changedTitleTodo = Todo.Create(3, "Replace through CQRS with new text", false).Value;
+        TestAssert.True(changedTitleTodo.Embedding.HasValue, "Changed title todo should populate a vector.");
+        Microsoft.Data.SqlTypes.SqlVector<float> changedVector = changedTitleTodo.Embedding.GetValueOrDefault();
+        TestAssert.True(
+            !savedVector.Memory.Span.SequenceEqual(changedVector.Memory.Span),
+            "Changing todo text should change the todo vector.");
 
         Result invalidTitleResult = await sender.Send(new SaveTaskListCommand([
             new SaveTaskListTodo(4, "   ", false),

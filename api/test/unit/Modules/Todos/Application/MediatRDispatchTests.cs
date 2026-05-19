@@ -11,6 +11,7 @@ using Checknote.Common.Domain;
 using Checknote.Modules.Todos.Application.Abstractions;
 using Checknote.Modules.Todos.Application.Todos.GetTodos;
 using Checknote.Modules.Todos.Application.Todos.SaveTaskList;
+using Checknote.Modules.Todos.Application.Todos.SearchTodos;
 using Checknote.Modules.Todos.Domain.Todos;
 using Checknote.Modules.Users.Application.Abstractions;
 using Checknote.Modules.Users.Application.Users.GetCurrentUser;
@@ -51,6 +52,19 @@ internal static class MediatRDispatchTests
         TestAssert.True(todosResult.IsSuccess, "GetTodosQuery should succeed.");
         TestAssert.Equal(2, todosResult.Value.Count, "GetTodosQuery todo count");
         TestAssert.Same(first, todosResult.Value.First(), "GetTodosQuery should return repository todos.");
+
+        Result<IReadOnlyCollection<Todo>> matchingSearchResult = await sender.Send(new SearchTodosQuery("ship"));
+        TestAssert.True(matchingSearchResult.IsSuccess, "SearchTodosQuery should succeed.");
+        TestAssert.Equal(1, matchingSearchResult.Value.Count, "SearchTodosQuery matching todo count");
+        TestAssert.Same(second, matchingSearchResult.Value.Single(), "SearchTodosQuery should return matching todo.");
+
+        Result<IReadOnlyCollection<Todo>> nonMatchingSearchResult = await sender.Send(new SearchTodosQuery("missing"));
+        TestAssert.True(nonMatchingSearchResult.IsSuccess, "SearchTodosQuery non-matching search should succeed.");
+        TestAssert.Equal(0, nonMatchingSearchResult.Value.Count, "SearchTodosQuery non-matching todo count");
+
+        Result<IReadOnlyCollection<Todo>> emptySearchResult = await sender.Send(new SearchTodosQuery("   "));
+        TestAssert.True(emptySearchResult.IsSuccess, "SearchTodosQuery empty search should succeed.");
+        TestAssert.Equal(0, emptySearchResult.Value.Count, "SearchTodosQuery empty search todo count");
 
         Result saveResult = await sender.Send(new SaveTaskListCommand([
             new SaveTaskListTodo(3, "Replace through CQRS", false),
@@ -113,6 +127,13 @@ internal static class MediatRDispatchTests
         public IReadOnlyCollection<Todo> SavedTodos { get; private set; }
 
         public IReadOnlyCollection<Todo> GetTodos() => todos;
+
+        public IReadOnlyCollection<Todo> SearchTodos(string searchText)
+        {
+            return todos
+                .Where(todo => todo.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
 
         public void SaveTodos(IReadOnlyCollection<Todo> todosToSave)
         {

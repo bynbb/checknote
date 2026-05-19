@@ -19,6 +19,7 @@ internal static class ApiAuthorizationTests
 
         AssertRequiresAuthorization(app, "/api/users/current", "GET");
         AssertRequiresAuthorization(app, "/api/todos", "GET");
+        AssertRequiresAuthorization(app, "/api/todos/search", "GET");
         AssertRequiresAuthorization(app, "/api/todos/task-list", "PUT");
     }
 

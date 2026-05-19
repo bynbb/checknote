@@ -7,5 +7,7 @@ public interface ITodoRepository
 {
     IReadOnlyCollection<Todo> GetTodos();
 
+    IReadOnlyCollection<Todo> SearchTodos(string searchText);
+
     void SaveTodos(IReadOnlyCollection<Todo> todos);
 }

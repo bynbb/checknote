@@ -9,6 +9,7 @@ using Checknote.Common.Presentation.Endpoints;
 using Checknote.Common.Presentation.Results;
 using Checknote.Modules.Todos.Application.Todos.GetTodos;
 using Checknote.Modules.Todos.Application.Todos.SaveTaskList;
+using Checknote.Modules.Todos.Application.Todos.SearchTodos;
 using Checknote.Modules.Todos.Domain.Todos;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
@@ -32,6 +33,34 @@ public sealed class GetTodosEndpoint : IEndpoint
                 ApiResults.Problem);
         })
         .WithName("GetTodos")
+        .WithTags("Todos")
+        .RequireAuthorization()
+        .Produces<IEnumerable<TodoResponse>>(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status400BadRequest);
+    }
+}
+
+public sealed class SearchTodosEndpoint : IEndpoint
+{
+    public const string Route = $"{GetTodosEndpoint.Route}/search";
+
+    public void MapEndpoint(IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet(Route, async (
+            string? q,
+            ISender sender,
+            CancellationToken cancellationToken) =>
+        {
+            Result<IReadOnlyCollection<Todo>> result = await sender.Send(
+                new SearchTodosQuery(q),
+                cancellationToken);
+
+            return result.Match<IReadOnlyCollection<Todo>, IResult>(
+                todos => Results.Ok(todos.Select(TodoResponse.From)),
+                ApiResults.Problem);
+        })
+        .WithName("SearchTodos")
         .WithTags("Todos")
         .RequireAuthorization()
         .Produces<IEnumerable<TodoResponse>>(StatusCodes.Status200OK)

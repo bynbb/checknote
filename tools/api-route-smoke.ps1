@@ -325,6 +325,16 @@ try {
         }
     }
 
+    try {
+        Invoke-WebRequest -Uri "$base/api/todos/search?q=build" -UseBasicParsing -TimeoutSec 5 | Out-Null
+        throw 'Expected /api/todos/search to require authentication.'
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 401) {
+            throw
+        }
+    }
+
     $authConfig = Invoke-WebRequest -Uri "$base/api/auth/config" -UseBasicParsing -TimeoutSec 5
 
     if ($authConfig.StatusCode -ne 200 -or $authConfig.Content -notmatch 'checknote-angular') {
@@ -386,6 +396,7 @@ try {
     Assert-OpenApiResponses -OpenApi $openApi -Path '/health' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/auth/config' -Method 'get' -StatusCodes @('200')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos' -Method 'get' -StatusCodes @('200', '400', '401')
+    Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/search' -Method 'get' -StatusCodes @('200', '400', '401')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -StatusCodes @('204', '400', '401')
     Assert-OpenApiResponses -OpenApi $openApi -Path '/api/users/current' -Method 'get' -StatusCodes @('200', '400', '401')
     Assert-OpenApiRequestBodyContent -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ContentType 'application/json'
@@ -393,6 +404,7 @@ try {
     Assert-OpenApiTag -OpenApi $openApi -Path '/health' -Method 'get' -ExpectedTag 'System'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/auth/config' -Method 'get' -ExpectedTag 'Auth'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos' -Method 'get' -ExpectedTag 'Todos'
+    Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos/search' -Method 'get' -ExpectedTag 'Todos'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/todos/task-list' -Method 'put' -ExpectedTag 'Todos'
     Assert-OpenApiTag -OpenApi $openApi -Path '/api/users/current' -Method 'get' -ExpectedTag 'Users'
 

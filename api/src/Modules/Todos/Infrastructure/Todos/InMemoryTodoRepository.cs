@@ -21,6 +21,16 @@ public sealed class InMemoryTodoRepository : ITodoRepository
         }
     }
 
+    public IReadOnlyCollection<Todo> SearchTodos(string searchText)
+    {
+        lock (Sync)
+        {
+            return todos
+                .Where(todo => todo.Title.Contains(searchText, System.StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+    }
+
     public void SaveTodos(IReadOnlyCollection<Todo> newTodos)
     {
         lock (Sync)

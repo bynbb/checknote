@@ -19,6 +19,7 @@ internal static partial class Program
             Console.WriteLine($"Keycloak client: {options.ClientId}");
             Console.WriteLine($"Current user endpoint: {options.CurrentUserUrl}");
             Console.WriteLine($"Todos endpoint: {options.TodosUrl}");
+            Console.WriteLine($"Todo search endpoint: {options.TodoSearchUrl}");
 
             DiscoveryDocument discoveryDocument = VerifyDiscovery(options);
             TokenSet tokenSet = FetchToken(options, discoveryDocument.TokenEndpoint);
@@ -26,7 +27,8 @@ internal static partial class Program
             UserProjection firstUser = VerifyCurrentUser(options, tokenSet.AccessToken);
             UserProjection secondUser = VerifyCurrentUser(options, tokenSet.AccessToken);
             VerifyStableCurrentUser(firstUser, secondUser);
-            VerifyProtectedTodos(options, tokenSet.AccessToken);
+            TodoProjection[] todos = VerifyProtectedTodos(options, tokenSet.AccessToken);
+            VerifyProtectedTodoSearch(options, tokenSet.AccessToken, todos);
             VerifyRejectedRequest("unauthenticated current user", options.CurrentUserUrl, null, 401);
             VerifyRejectedRequest("invalid-token current user", options.CurrentUserUrl, "not-a-valid-token", 401);
 
@@ -163,15 +165,55 @@ internal static partial class Program
         Console.WriteLine("Verified repeated /api/users/current projection is stable.");
     }
 
-    private static void VerifyProtectedTodos(AuthSmokeOptions options, string accessToken)
+    private static TodoProjection[] VerifyProtectedTodos(AuthSmokeOptions options, string accessToken)
     {
-        using Chilkat.HttpResponse response = GetResponse(options.TodosUrl, accessToken);
-        if (response.StatusCode != 200)
-        {
-            throw new InvalidOperationException($"Expected authenticated todos request to return 200, got HTTP {response.StatusCode}.");
-        }
+        TodoProjection[] todos = GetTodos(options.TodosUrl, accessToken);
 
         Console.WriteLine("Verified /api/todos with bearer token.");
+        return todos;
+    }
+
+    private static void VerifyProtectedTodoSearch(
+        AuthSmokeOptions options,
+        string accessToken,
+        IReadOnlyCollection<TodoProjection> todos)
+    {
+        string missingQuery = $"missing-{Guid.NewGuid():N}";
+        TodoProjection[] missingMatches = GetTodos(
+            $"{options.TodoSearchUrl}?q={Uri.EscapeDataString(missingQuery)}",
+            accessToken);
+        Expect(missingMatches.Length == 0, "Todo search should return an empty array for a non-matching query.");
+
+        TodoProjection? searchableTodo = null;
+        foreach (TodoProjection todo in todos)
+        {
+            if (!string.IsNullOrWhiteSpace(todo.Title))
+            {
+                searchableTodo = todo;
+                break;
+            }
+        }
+
+        if (searchableTodo is null)
+        {
+            Console.WriteLine("Verified /api/todos/search with bearer token; matching query skipped because no searchable todos exist.");
+            return;
+        }
+
+        TodoProjection[] matches = GetTodos(
+            $"{options.TodoSearchUrl}?q={Uri.EscapeDataString(searchableTodo.Title)}",
+            accessToken);
+
+        foreach (TodoProjection match in matches)
+        {
+            if (match.Id == searchableTodo.Id)
+            {
+                Console.WriteLine("Verified /api/todos/search returns a matching todo with bearer token.");
+                return;
+            }
+        }
+
+        throw new InvalidOperationException("Todo search did not return the expected matching todo.");
     }
 
     private static void VerifyRejectedRequest(string name, string url, string? bearerToken, int expectedStatusCode)
@@ -194,6 +236,24 @@ internal static partial class Program
         }
 
         return JsonDocument.Parse(response.BodyStr);
+    }
+
+    private static TodoProjection[] GetTodos(string url, string bearerToken)
+    {
+        using JsonDocument json = GetJson(url, bearerToken);
+        JsonElement root = json.RootElement;
+        Expect(root.ValueKind == JsonValueKind.Array, $"{url} should return a JSON array.");
+
+        List<TodoProjection> todos = [];
+        foreach (JsonElement item in root.EnumerateArray())
+        {
+            todos.Add(new TodoProjection(
+                GetRequiredInt64(item, "id", "todo id"),
+                GetRequiredString(item, "title", "todo title"),
+                GetRequiredBoolean(item, "completed", "todo completed")));
+        }
+
+        return todos.ToArray();
     }
 
     private static Chilkat.HttpResponse GetResponse(string url, string? bearerToken)
@@ -237,6 +297,17 @@ internal static partial class Program
         }
 
         return value;
+    }
+
+    private static bool GetRequiredBoolean(JsonElement element, string propertyName, string description)
+    {
+        if (!element.TryGetProperty(propertyName, out JsonElement property) ||
+            (property.ValueKind != JsonValueKind.True && property.ValueKind != JsonValueKind.False))
+        {
+            throw new InvalidOperationException($"Missing {description}.");
+        }
+
+        return property.GetBoolean();
     }
 
     private static string? TryGetStringOrArray(JsonElement element, string propertyName)
@@ -309,6 +380,8 @@ internal sealed record TokenSet(string AccessToken);
 
 internal sealed record UserProjection(string Id, string Name, string Email);
 
+internal sealed record TodoProjection(long Id, string Title, bool Completed);
+
 internal sealed record AuthSmokeOptions(
     string ChilkatLicenseKey,
     string Username,
@@ -319,6 +392,7 @@ internal sealed record AuthSmokeOptions(
     string? ClientSecret,
     string CurrentUserUrl,
     string TodosUrl,
+    string TodoSearchUrl,
     string? ExpectedAudience,
     string? ExpectedName,
     string? ExpectedEmail)
@@ -332,6 +406,7 @@ internal sealed record AuthSmokeOptions(
     public static AuthSmokeOptions FromEnvironment()
     {
         string keycloakBaseUrl = GetOptional("CHECKNOTE_AUTH_SMOKE_KEYCLOAK_BASE_URL", "https://auth.checknote.io").TrimEnd('/');
+        string todosUrl = GetOptional("CHECKNOTE_AUTH_SMOKE_TODOS_URL", "https://www.checknote.io/api/todos");
 
         return new AuthSmokeOptions(
             GetRequired(LicenseKeyVariable),
@@ -342,7 +417,8 @@ internal sealed record AuthSmokeOptions(
             GetOptional("CHECKNOTE_AUTH_SMOKE_CLIENT_ID", "checknote-angular"),
             GetOptionalOrNull("CHECKNOTE_AUTH_SMOKE_CLIENT_SECRET"),
             GetOptional("CHECKNOTE_AUTH_SMOKE_CURRENT_USER_URL", "https://www.checknote.io/api/users/current"),
-            GetOptional("CHECKNOTE_AUTH_SMOKE_TODOS_URL", "https://www.checknote.io/api/todos"),
+            todosUrl,
+            GetOptional("CHECKNOTE_AUTH_SMOKE_TODO_SEARCH_URL", $"{todosUrl.TrimEnd('/')}/search"),
             GetOptionalOrNull("CHECKNOTE_AUTH_SMOKE_EXPECTED_AUDIENCE"),
             GetOptionalOrNull("CHECKNOTE_AUTH_SMOKE_EXPECTED_NAME"),
             GetOptionalOrNull("CHECKNOTE_AUTH_SMOKE_EXPECTED_EMAIL"));

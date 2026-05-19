@@ -24,11 +24,31 @@ public sealed class SqlTodoRepository : ITodoRepository
             .ToArray();
     }
 
+    public IReadOnlyCollection<Todo> SearchTodos(string searchText)
+    {
+        string likePattern = $"%{EscapeLikePattern(searchText)}%";
+
+        return dbContext.TaskList
+            .AsNoTracking()
+            .Where(todo => EF.Functions.Like(todo.Title, likePattern, @"\"))
+            .OrderByDescending(todo => todo.Id)
+            .ToArray();
+    }
+
     public void SaveTodos(IReadOnlyCollection<Todo> todos)
     {
         Todo[] existingTodos = dbContext.TaskList.ToArray();
         dbContext.TaskList.RemoveRange(existingTodos);
         dbContext.TaskList.AddRange(todos);
         dbContext.SaveChanges();
+    }
+
+    private static string EscapeLikePattern(string searchText)
+    {
+        return searchText
+            .Replace(@"\", @"\\", System.StringComparison.Ordinal)
+            .Replace("%", @"\%", System.StringComparison.Ordinal)
+            .Replace("_", @"\_", System.StringComparison.Ordinal)
+            .Replace("[", @"\[", System.StringComparison.Ordinal);
     }
 }
